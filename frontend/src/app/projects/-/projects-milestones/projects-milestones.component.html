@@ -1,0 +1,192 @@
+<toolbar></toolbar>
+
+@let milestoneData = data();
+@if (loading()) {
+    <spinner class="p-5"></spinner>
+} @else if (milestoneData) {
+    <div class="row g-3">
+
+        <!-- Invoice Items without Milestone -->
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card mb-3 card-accent-secondary">
+                <div class="card-header hstack gap-2">
+                    <span i18n="@@i18n.milestones.invoiceItemsWithoutMilestone">invoice items without milestone</span>
+                    <span class="badge bg-secondary ms-auto">{{ milestoneData.invoiceItemsWithoutMilestone.length }}</span>
+                </div>
+                @if (milestoneData.invoiceItemsWithoutMilestone.length === 0) {
+                    <div class="card-body d-flex align-items-center justify-content-center text-muted py-4"
+                         i18n="@@i18n.milestones.noInvoiceItemsWithoutMilestone">all invoice items are linked to a milestone</div>
+                } @else {
+                    <ul class="list-group list-group-flush">
+                        @for (item of milestoneData.invoiceItemsWithoutMilestone; track item.id) {
+                            <li class="list-group-item py-2 px-3" [nx]="item">
+                                <div class="hstack gap-2">
+                                    @if (item.project) {
+                                        <avatar [object]="item.project"></avatar>
+                                    }
+                                    <div class="vstack gap-0 text-truncate flex-fill">
+                                        <div class="text-truncate fw-medium" [innerHTML]="item.text | safe: 'html'"></div>
+                                        @if (item.project) {
+                                            <small class="text-muted text-truncate">{{ item.project.name }}</small>
+                                        }
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+            <div class="card mb-3 card-accent-warning">
+                <div class="card-header hstack gap-2">
+                    <span i18n="@@i18n.milestones.unassigned">unassigned milestones</span>
+                    <span class="badge bg-warning text-dark ms-auto">{{ milestoneData.unassigned.length }}</span>
+                </div>
+                @if (milestoneData.unassigned.length === 0) {
+                    <div class="card-body d-flex align-items-center justify-content-center text-muted py-4"
+                         i18n="@@i18n.milestones.noUnassigned">no unassigned milestones</div>
+                } @else {
+                    <ul class="list-group list-group-flush">
+                        @for (milestone of milestoneData.unassigned; track milestone.id) {
+                            <li class="list-group-item py-2 px-3" [nx]="milestone">
+                                <div class="hstack gap-2">
+                                    <avatar [object]="milestone.project!"></avatar>
+                                    <div class="vstack gap-0 text-truncate flex-fill">
+                                        <div class="text-truncate fw-medium">{{ milestone.name }}</div>
+                                        <div class="hstack gap-2 mt-1">
+                                            <small class="text-muted text-truncate flex-fill">{{ milestone.project!.name }}</small>
+                                            @if (milestone.due_at) {
+                                                <small class="badge flex-shrink-0"
+                                                       [class]="milestone.isDuePast() ? 'text-bg-danger' : 'text-bg-dark'">
+                                                    {{ milestone.due_at | date:'d MMM' }}
+                                                </small>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+
+        <!-- Overdue Milestones -->
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card mb-3 card-accent-danger">
+                <div class="card-header hstack gap-2">
+                    <span i18n="@@i18n.milestones.overdue">overdue milestones</span>
+                    <span class="badge bg-danger ms-auto">{{ milestoneData.overdue.length }}</span>
+                </div>
+                @if (milestoneData.overdue.length === 0) {
+                    <div class="card-body d-flex align-items-center justify-content-center text-muted py-4"
+                         i18n="@@i18n.milestones.noOverdue">no overdue milestones</div>
+                } @else {
+                    <ul class="list-group list-group-flush">
+                        @for (milestone of milestoneData.overdue; track milestone.id) {
+                            <li class="list-group-item py-2 px-3" [nx]="milestone">
+                                <div class="hstack gap-2">
+                                    <avatar [object]="milestone.project!"></avatar>
+                                    <div class="vstack gap-0 text-truncate flex-fill">
+                                        <div class="hstack gap-2">
+                                            <span class="text-truncate fw-medium flex-fill">{{ milestone.name }}</span>
+                                            @if (milestone.started_at) {
+                                                <span class="badge bg-danger flex-shrink-0">
+                                                    +{{ getDaysOverdue(milestone.started_at) }}d
+                                                </span>
+                                            }
+                                        </div>
+                                        <div class="hstack gap-2 mt-1">
+                                            <small class="text-muted text-truncate flex-fill">{{ milestone.project!.name }}</small>
+                                            @if (milestone.user) {
+                                                <avatar [object]="milestone.user" size="xs"></avatar>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+
+        <!-- Milestones without Workload -->
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card mb-3 card-accent-info">
+                <div class="card-header hstack gap-2">
+                    <span i18n="@@i18n.milestones.noWorkload">milestones without workload</span>
+                    <span class="badge bg-info ms-auto">{{ milestoneData.noWorkload.length }}</span>
+                </div>
+                @if (!milestoneData.noWorkload.length) {
+                    <div class="card-body d-flex align-items-center justify-content-center text-muted py-4"
+                         i18n="@@i18n.milestones.allHaveWorkload">all milestones have workload defined</div>
+                } @else {
+                    <ul class="list-group list-group-flush">
+                        @for (milestone of milestoneData.noWorkload; track milestone.id) {
+                            <li class="list-group-item py-2 px-3" [nx]="milestone">
+                                <div class="hstack gap-2">
+                                    <avatar [object]="milestone.project!"></avatar>
+                                    <div class="vstack gap-0 text-truncate flex-fill">
+                                        <div class="hstack gap-2">
+                                            <span class="text-truncate fw-medium flex-fill">{{ milestone.name }}</span>
+                                            <span class="badge flex-shrink-0" [class]="milestone.scss">{{ milestone.state }}</span>
+                                        </div>
+                                        <div class="hstack gap-2 mt-1">
+                                            <small class="text-muted text-truncate flex-fill">{{ milestone.project!.name }}</small>
+                                            @if (milestone.user) {
+                                                <avatar [object]="milestone.user" size="xs"></avatar>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+
+        <!-- Project Workload Deviation -->
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card mb-3 card-accent-primary">
+                <div class="card-header hstack gap-2">
+                    <span i18n="@@i18n.milestones.workloadDeviation">workload deviation</span>
+                    <span class="badge bg-dark ms-auto">{{ milestoneData.projects.length }}</span>
+                </div>
+                @if (milestoneData.projects.length === 0) {
+                    <div class="card-body d-flex align-items-center justify-content-center text-muted py-4"
+                         i18n="@@i18n.milestones.noProjects">no running projects</div>
+                } @else {
+                    <ul class="list-group list-group-flush">
+                        @for (project of milestoneData.projects; track project.id) {
+                            <li class="list-group-item py-2 px-3">
+                                <div class="hstack gap-2 mb-1">
+                                    <avatar [object]="project"></avatar>
+                                    <span class="text-truncate flex-fill fw-medium">{{ project.name }}</span>
+                                    @if (project.var.missing_coverage) {
+                                        <span class="badge bg-danger flex-shrink-0"
+                                              i18n="@@i18n.milestones.noCoverage">no coverage</span>
+                                    } @else {
+                                        <span class="fw-bold small flex-shrink-0"
+                                              [class]="getDeviationClass(project.var.deviation)">
+                                            {{ project.var.deviation > 0 ? '+' : '' }}{{ project.var.deviation }}%
+                                        </span>
+                                    }
+                                </div>
+                                @if (!project.var.missing_coverage) {
+                                    <div class="progress" style="height: 3px;">
+                                        <div class="progress-bar"
+                                             [class]="getDeviationBarClass(project.var.deviation)"
+                                             [style.width.%]="getDeviationBarWidth(project.var.deviation)">
+                                        </div>
+                                    </div>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+
+    </div>
+}

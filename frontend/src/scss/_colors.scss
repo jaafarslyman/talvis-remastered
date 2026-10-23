@@ -1,0 +1,79 @@
+@use "sass:map";
+@use "sass:color";
+@use "sass:math";
+
+// WCAG 2 relative luminance; above ~0.179 black text has the higher contrast ratio.
+@function readable-on($background) {
+    $luminance: 0;
+    @each $channel, $weight in ('red': 0.2126, 'green': 0.7152, 'blue': 0.0722) {
+        $value: math.div(color.channel($background, $channel, $space: rgb), 255);
+        $linear: math.pow(math.div($value + 0.055, 1.055), 2.4);
+        @if $value <= 0.04045 {
+            $linear: math.div($value, 12.92);
+        }
+        $luminance: $luminance + $weight * $linear;
+    }
+    @if $luminance > 0.179 {
+        @return black;
+    }
+    @return white;
+}
+
+$bg-darker : #050909;  // deepest surface, near-black green-gray
+$bg-card   : #101818;  // cards
+$bg-body   : #162020;  // body / modals / navbars
+$bg-hover  : #1d2929;  // hover states
+$bg-muted  : #233232;  // inputs / secondary containers
+
+$custom-colors: (
+    'blue'           : #135BCD,                              // projects
+    'indigo'         : #391AD2,
+    'purple'         : #7B0DCF,                              // acquisitions
+    'pink'           : #DC0094,                              // products
+    'red'            : #F9001D,                              // customers
+    'orange'         : #FF6700,
+    'yellow'         : #FFA200,                              // expenses
+    'green'          : #30E800,                              // invoices
+    'teal'           : #00C9A7,                              // prepared invoices / primary
+    'cyan'           : #0A8BC9,                              // time-based projects
+    'cyan-teal'      : #05AAB8,                              // customer support (between cyan and teal)
+    'grey'           : #888888,
+    'dark-grey'      : #444444,
+    'primary-0'      : #00C9A7,
+    'primary-1'      : #69D8C5,
+    'primary-2'      : #2BCBB0,
+    'primary-3'      : #008972,
+    'primary-4'      : color.adjust(#00C9A7, $lightness: -30%),
+    'danger'         : #F9001D,
+    'danger-darker'  : color.adjust(#F9001D, $lightness: -30%),
+    'warning'        : #FFA200,
+    'warning-darker' : color.adjust(#FFA200, $lightness: -30%),
+    'success'        : #30E800,
+    'success-darker' : color.adjust(#30E800, $lightness: -30%),
+    'info'           : #00C9A7,
+    'info-darker'    : color.adjust(#00C9A7, $lightness: -30%),
+    'card'           : $bg-card,
+);
+
+$blue   : map.get($custom-colors, 'blue');
+$indigo : map.get($custom-colors, 'indigo');
+$purple : map.get($custom-colors, 'purple');
+$pink   : map.get($custom-colors, 'pink');
+$red    : map.get($custom-colors, 'red');
+$orange : map.get($custom-colors, 'orange');
+$yellow : map.get($custom-colors, 'yellow');
+$green  : map.get($custom-colors, 'green');
+$teal   : map.get($custom-colors, 'teal');
+$cyan   : map.get($custom-colors, 'cyan');
+
+$primary  : $teal;
+$secondary: $pink;
+$primary-1: map.get($custom-colors, 'primary-1');
+$primary-2: map.get($custom-colors, 'primary-2');
+$primary-3: map.get($custom-colors, 'primary-3');
+$primary-4: #005d4e;
+
+$success: #6bf57e;
+$warning: #e2f56b;
+$danger : #f57e6b;
+$info   : #6be2f5;

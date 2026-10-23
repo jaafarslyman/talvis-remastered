@@ -1,0 +1,192 @@
+@let _company = company();
+@let _cust = customer();
+@let _connections = connections();
+@let _notes = notes();
+@let _projects = projects();
+<toolbar>
+    <button type="button mb-3" class="btn btn-primary ms-3 capitalize" (click)="saveComments()" tabindex="0" (keydown.enter)="saveComments()" ngbTooltip="CTRL+ALT+S" hotkey="CTRL+ALT+S"><i>save</i><span i18n="@@i18n.common.save">save</span></button>
+</toolbar>
+<div class="row">
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div i18n="@@i18n.common.contacts">contacts</div>
+                <button class="card-header-action btn text-primary float-end" type="submit" (click)="createContact()" tabindex="0" (keydown.enter)="createContact()" title="add" i18n-title="@@i18n.common.add">
+                    <i>add</i>
+                </button>
+            </div>
+            <ul class="list-group" #employeesList>
+                @if (_cust) {
+                    <li class="list-group-item hstack gap-2 p-2" [class.active]="isSelected(_cust)" [nx]="_cust" (click)="selectItem(_cust, $event)" (keyup.enter)="selectItem(_cust, $event)" tabindex="0">
+                        <avatar [object]="_cust"></avatar>
+                        <div class="flex-fill text-truncate fw-bold">{{ _cust.getName() }}</div>
+                        <i class="text-muted" ngbTooltip="edit company details" i18n-ngbTooltip="@@i18n.knownseq.edit_company">business</i>
+                    </li>
+                }
+                @for (c of _cust?.employees; track c.id) {
+                    @if (!c.is_retired) {
+                        <list-group-item-contact [class.active]="isSelected(c)" [nx]="c" [tables]="_cust?.employees" [contact]="c" [showQuickContact]="true" [subject]="_cust?.getName() ?? ''" (click)="selectItem(c, $event)" tabindex="0" (keydown.enter)="selectItem(c, $event)" (actionsResolved)="onAssignmentActions($event)">
+                            <div class="hstack gap-1">
+                                @if (birthdayMissing(c)) {
+                                    <div>
+                                        <i class="text-warning" ngbTooltip="Birthday missing" i18n-ngbTooltip="@@i18n.customers.birthdayMissing">cake</i>
+                                    </div>
+                                }
+                                @if (linkedinMissing(c)) {
+                                    <div>
+                                        <i class="text-warning" ngbTooltip="LinkedIn missing" i18n-ngbTooltip="@@i18n.customers.linkedinMissing">link</i>
+                                    </div>
+                                }
+                            </div>
+                        </list-group-item-contact>
+                    }
+                }
+            </ul>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                connections
+                <span class="badge bg-lighter ms-2">{{ _connections.length }}</span>
+                <div class="card-header-actions">
+                    <div ngbDropdown>
+                        <i class="text-primary cursor-pointer" [ngbPopover]="popContent" placement="end" container="body" [autoClose]="'outside'" popoverTitle="Add connection">add</i>&nbsp;
+                        <i class="text-primary btn-plain h-auto pointer" ngbDropdownToggle></i>
+                        <ul class="autoposition" ngbDropdownMenu style="text-transform: none" aria-labelledby="addButton">
+                            <li>
+                                <a class="dropdown-item pointer d-flex px-3 py-2 cursor-pointer" (click)="createCompany()" tabindex="0" (keydown.enter)="createCompany()">
+                                    <span i18n="@@i18n.common.newCompany">new company</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <ng-template #popContent>
+                        <search-input #popSearch only="Company" (itemSelected)="onCompanySelect($event)"></search-input>
+                    </ng-template>
+                </div>
+            </div>
+
+            @if (_company) {
+                <ul-compact class="list-group">
+                    @for (con of _connections; track con.id) {
+                        <li class="list-group-item d-flex text-nowrap p-0" [class.active]="isSelected(con.otherCompany(_company))" [compact]="true" [nx]="con" [tables]="_connections">
+                            <div class="hstack gap-2 p-2 w-100 cursor-pointer" (click)="selectItem(con, $event)" (keyup.enter)="selectItem(con, $event)" tabindex="0">
+                                <div>
+                                    <avatar [object]="con.otherCompany(_company)"></avatar>
+                                </div>
+                                <div class="flex-fill text-truncate">{{ con.otherCompany(_company)?.getName() }}</div>
+                            </div>
+                        </li>
+                    }
+                </ul-compact>
+            }
+        </div>
+    </div>
+
+    <div class="col-12 col-md-6">
+        @if (_company.isDraft()) {
+            <knownseq-caller-cards [number]="callerNumber()"></knownseq-caller-cards>
+        } @else {
+            <div class="row">
+                <div class="col-12 col-md-6">
+                    <div class="card info-card mb-3">
+                        <div class="card-header">
+                            <span i18n="@@i18n.common.revenue">revenue</span>
+                            <span class="badge bg-lighter ms-2 py-1 px-1" ngbTooltip="accumulated revenue of the last 12 months" i18n="@@i18n.common.12m" i18n-ngbTooltip="@@i18n.invoice.revenue12m">12m</span>
+                            <div class="chart-title ms-auto"><value-unit [value]="(revenueChart.value() || 0) | money" /></div>
+                        </div>
+                        <echarts-range-card #revenueChart keyPath="{{ _company.getParamPath('INVOICE_REVENUE_12M,INVOICE_DEG_12M') }}" [color]="['white', 'primary']"></echarts-range-card>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="card mb-3 info-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div i18n="@@i18n.common.contact">contact</div>
+                            <a [href]="_cust?.apiPathWithId()" target="_blank" class="pointer text-primary"><i>chevron_right</i></a>
+                        </div>
+                        <div class="card-body">
+                            <div [innerHTML]="_cust?.address | safe: 'html'"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div id="notesContainer">
+            @for (note of _notes; track noteKey(note)) {
+                @if (note.var.active && getItem(note); as item) {
+                    @if (item.assert(Project); as project) {
+                        <div class="card mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div>{{ project.getName() }}</div>
+                            </div>
+                            <rte [object]="project" key="description" [compact]="true"></rte>
+                        </div>
+                        <media-preview [parent]="project"></media-preview>
+                    }
+                    @if (item.assert(Company); as company) {
+                        <media-preview [parent]="company"></media-preview>
+                        <app-vcard [object]="company"></app-vcard>
+                    }
+                    @if (item.assert(CompanyContact); as contact) {
+                        <app-vcard [object]="contact.contact" type="home"></app-vcard>
+                        <app-vcard [object]="contact"></app-vcard>
+                    }
+                }
+            }
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        @if (!_company.isDraft()) {
+            <div class="card mb-3 info-card">
+                <customer-quickstats [company]="_company"></customer-quickstats>
+            </div>
+        }
+
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center" style="width: 100%">
+                    <div i18n="@@i18n.common.projects">projects</div>
+                    <button class="card-header-action btn text-primary float-end" type="submit" (click)="createProject($event)" tabindex="0" (keydown.enter)="createProject($event)" title="add" i18n-title="@@i18n.common.add">
+                        <i>add</i>
+                    </button>
+                </div>
+            </div>
+            <div>
+                @if (_projects.length === 0 && !projectsLoaded()) {
+                    <spinner class="py-4"></spinner>
+                } @else if (_projects.length === 0) {
+                    <empty-state class="projects" title="no projects yet..." i18n-title="@@i18n.projects.noProjectsYet"></empty-state>
+                }
+                <ng-container *ngTemplateOutlet="projectList; context: { $implicit: _projects }"></ng-container>
+            </div>
+        </div>
+    </div>
+</div>
+
+<ng-template #projectList let-items>
+    @if (_projects.length > 0) {
+        <div>
+            <ul-compact class="list-group">
+                @for (item of items; track item.id) {
+                    <li class="list-group-item p-0" [compact]="isFinishedProject(item)">
+                        <div class="hstack gap-2 p-2" [class.active]="isSelected(item)" [nx]="item" (click)="selectItem(item, $event)" (keyup.enter)="selectItem(item, $event)" tabindex="0">
+                            <div>
+                                <project [project]="item"></project>
+                            </div>
+                            <div class="flex-fill text-truncate">
+                                {{ item.name }}
+                            </div>
+                            <button class="btn btn-sm text-primary btn-plain" type="button" (click)="createSubProject($event, item)" tabindex="0" (keydown.enter)="createSubProject($event, item)" title="add subproject" i18n-title="@@i18n.projects.addSubproject">
+                                <i>add</i>
+                            </button>
+                        </div>
+                    </li>
+                }
+            </ul-compact>
+        </div>
+    }
+</ng-template>

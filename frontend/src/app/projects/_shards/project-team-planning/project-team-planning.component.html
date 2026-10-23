@@ -1,0 +1,93 @@
+@let _entity = trackedEntity();
+@let _project = asProject();
+@let _assignees = assignees();
+
+@if (_entity) {
+    <div class="card mb-3">
+        <div class="card-header hstack gap-2 pe-0">
+            <span class="flex-fill" i18n="@@i18n.common.assignees">assignees</span>
+            @if (forecastWarning()) {
+                <i class="text-warning" ngbTooltip="More than 50% of the time budget has not been allocated yet" i18n-ngbTooltip="@@i18n.projects.forecastWarning">warning</i>
+            }
+
+            <div [roles]="_project ? 'project_manager' : 'admin'" class="card-header-actions">
+                <div ngbDropdown>
+                    <button class="btn text-primary btn-plain dropdown-toggle-simple" ngbDropdownToggle><i class="text-primary">add</i></button>
+                    <ul class="autoposition" ngbDropdownMenu style="text-transform: none" aria-labelledby="addButton">
+                        @for (x of canBeAssigned(); track x.id) {
+                            <li>
+                                <a class="dropdown-item pointer d-flex px-3 py-2 cursor-pointer" (click)="addUser(x)" (keyup.enter)="addUser(x)" tabindex="0">
+                                    <avatar [object]="x"></avatar>
+                                    <span>{{ x.getName() }}</span>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+        @let _progress = forecastProgress();
+        @if (_progress) {
+            <div class="progress rounded-0" style="height: 2px" [ngbTooltip]="tooltipText()">
+                <div class="progress-bar bg-primary" [style.width.%]="_progress.investedPct"></div>
+                @if (_progress.allocatedPct > 0) {
+                    <div class="progress-bar bg-primary bg-striped" [style.width.%]="_progress.allocatedPct"></div>
+                }
+                @if (_progress.overdraftPct > 0) {
+                    <div class="progress-bar bg-warning" [style.width.%]="_progress.overdraftPct"></div>
+                }
+                @if (_progress.overAllocatedPct > 0) {
+                    <div class="progress-bar bg-warning bg-striped" [style.width.%]="_progress.overAllocatedPct"></div>
+                }
+            </div>
+        }
+        @let _mantisInstance = mantisInstance();
+        @let _gitInstance = gitInstance();
+        @let _chatInstances = chatInstances();
+        @if (!_assignees.length) {
+            <div class="card-body py-2 small text-muted" i18n="@@i18n.projects.noAssigneesYet">no one assigned yet</div>
+        }
+        <ul class="list-group">
+            @for (c of _assignees; track c.id) {
+                <li class="list-group-item hstack gap-2" [nx]="c" [tables]="_assignees">
+                    <div class="position-relative">
+                        <avatar [object]="c.assignee"></avatar>
+                        @if (_project?.project_manager?.id === c.assignee.id) {
+                            <i class="pm-badge" i18n-title="@@i18n.common.projectManager" title="project manager">manage_accounts</i>
+                        }
+                    </div>
+                    <div class="flex-fill text-truncate" [title]="c.assignee.getName()">
+                        {{ c.assignee.getName() }}
+                    </div>
+                    <div class="input-group w-auto flex-nowrap">
+                        @if (c.assignee.getUserIdForPlugin('X-NEXUS-MANTISBT') && _mantisInstance) {
+                            <a class="input-group-text text-decoration-none px-1 cursor-pointer" (click)="openLink($event, _mantisInstance)" (keyup.enter)="openLink($event, _mantisInstance)" tabindex="0">
+                                <n [class]="c.assignee.getInstanceIconClass(_mantisInstance)" style="font-size: 0.7rem">mantis</n>
+                            </a>
+                        }
+                        @if (c.assignee.getUserIdForPlugin('X-NEXUS-GIT') && _gitInstance) {
+                            <a class="input-group-text text-decoration-none px-1 cursor-pointer" (click)="openLink($event, _gitInstance)" (keyup.enter)="openLink($event, _gitInstance)" tabindex="0">
+                                <n [class]="c.assignee.getInstanceIconClass(_gitInstance)" style="font-size: 0.7rem">git</n>
+                            </a>
+                        }
+                        @for (chat of _chatInstances; track chat.id) {
+                            @if (c.assignee.getUserIdForPlugin(chat.getVcardAttributeName())) {
+                                <a class="input-group-text text-decoration-none px-1 cursor-pointer" (click)="openLink($event, chat)" (keyup.enter)="openLink($event, chat)" tabindex="0">
+                                    <n [class]="c.assignee.getInstanceIconClass(chat)" style="font-size: 0.7rem">{{ chat.icon() }}</n>
+                                </a>
+                            }
+                        }
+                        @if (_project?.is_time_based || isProjectManager()) {
+                            @if (isProjectManager()) {
+                                <input class="form-control text-end" style="width: 50px;" i18n-title="@@i18n.projects.plannedHours" title="planned hours" [(ngModel)]="c.hours_planned" (blur)="c.hours_planned = roundHours(c.hours_planned)" [autosave]="c" roles="project_manager" />
+                            }
+                            @else {
+                                <span class="input-group-text" i18n-title="@@i18n.projects.plannedHours" title="planned hours" noroles="project_manager">{{ c.hours_planned | number: '1.0-1' }}h</span>
+                            }
+                        }
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+}

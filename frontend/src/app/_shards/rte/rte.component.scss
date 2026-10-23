@@ -1,0 +1,41 @@
+.preview {
+    position: relative;
+    min-height: 2rem;
+    button { position: absolute; top: -40px; right:0; }
+    &.compact {
+        height: 0;
+        min-height: 0;
+        padding: 0 !important;
+    }
+}
+:host:has(.preview.compact) {
+    display: block;
+    height: 0;
+}
+.compact-warning {
+    position: absolute;
+    top: -1.9rem;
+    right: 3.5rem;
+    cursor: pointer;
+}
+.image {
+    margin: 2rem 0;
+    background-image: url('../../../assets/empty-state/empty_state.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center center;
+    min-height: 10rem;
+    cursor: pointer;
+}
+.rte-toolbar {
+    border-radius: var(--bs-border-radius);
+}
+::ng-deep quill-editor {
+    display: block;
+    width: 100% !important;
+}
+::ng-deep .ql-editor {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: pre-wrap;
+}

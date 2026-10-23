@@ -1,0 +1,60 @@
+@if (global.user) {
+    <div class="card card-info mb-3" i18n="@@i18n.info.profile.connectorsEncrypted">all your connector tokens will be encrypted on your client with your private key</div>
+}
+
+@if (global.user && !global.user.public_key) {
+    <div class="card">
+        <rsa-settings-empty [user]="global.user!"></rsa-settings-empty>
+    </div>
+}
+
+@if (global.user && global.user.public_key) {
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xxl-6 g-3">
+        @for (plugin of getAllPlugins(); track plugin.id) {
+            @let _status = getPluginStatusText(plugin);
+            <div class="col">
+                <div class="card h-100 cursor-pointer" (click)="openPluginModal(plugin)" (keyup.enter)="openPluginModal(plugin)" tabindex="0">
+                    <div class="card-body vstack align-items-center text-center gap-1">
+                        <n class="fs-2">{{ getPluginType(plugin) }}</n>
+                        <span class="text-truncate mw-100">{{ getPluginDisplayName(plugin) }}</span>
+                        @if (getPluginType(plugin) === 'local_ai' && plugin.value?.model && isPluginConnected(plugin)) {
+                            <small class="text-muted text-truncate mw-100">{{ plugin.value.model }}</small>
+                        }
+                        <small class="text-muted text-truncate mw-100">
+                            @if (plugin.value?.url) {
+                                {{ urlHost(plugin.value.url) }}
+                            } @else {
+                                <span i18n="@@i18n.profile.notConfigured">not configured</span>
+                            }
+                        </small>
+                        @if (_status) {
+                            <span class="badge mt-auto" [class.bg-success]="_status === 'connected'" [class.bg-danger]="_status === 'connection fail'" [class.bg-warning]="_status === 'no token' || _status === 'connecting'" [class.bg-secondary]="_status === 'idle' || _status === 'not configured' || _status === 'unknown' || _status === 'error'">
+                                {{ _status }}
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (global.user?.public_key) {
+    <toolbar>
+        <div ngbDropdown class="d-inline-block">
+            <button class="btn btn-primary" type="button" ngbDropdownToggle><i>add</i> <span i18n="@@i18n.common.connector">connector</span></button>
+            <div ngbDropdownMenu>
+                <button ngbDropdownItem (click)="openNewPluginModal('mattermost', 'Mattermost')" i18n="@@i18n.common.mattermost">Mattermost</button>
+                <button ngbDropdownItem (click)="openNewPluginModal('git', 'GitLab')" i18n="@@i18n.common.gitlab">GitLab</button>
+                <button ngbDropdownItem (click)="openNewPluginModal('mantis', 'MantisBT')" i18n="@@i18n.common.mantisbt">MantisBT</button>
+                <button ngbDropdownItem (click)="openNewPluginModal('jira', 'Jira')" i18n="@@i18n.common.jira">Jira</button>
+                <button ngbDropdownItem (click)="openNewPluginModal('github', 'GitHub')" i18n="@@i18n.common.github">GitHub</button>
+                <button ngbDropdownItem (click)="openNewPluginModal('slack', 'Slack')" i18n="@@i18n.common.slack">slack</button>
+                <button ngbDropdownItem (click)="openNewPluginModal('local_ai', 'LocalAI Proxy')" i18n="@@i18n.profile.localaiProxy">localai proxy</button>
+                <button ngbDropdownItem (click)="openNewPluginModal('calendar', calendarConnector)">{{ calendarConnector }}</button>
+            </div>
+        </div>
+    </toolbar>
+}
+
+<activity-tab-plugins></activity-tab-plugins>

@@ -1,0 +1,15 @@
+.form-control,
+.form-control-sm,
+.form-select {
+    font-size: 0.875rem;
+}
+
+.btn-group {
+    .btn {
+        border-color: var(--bs-border-color);
+
+        &.active {
+            border-color: transparent;
+        }
+    }
+}

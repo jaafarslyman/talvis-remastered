@@ -1,0 +1,71 @@
+@let _stickies = stickies();
+@let _groupedComments = groupedComments();
+@let _hasActivity = hasActivity();
+@let _showActivity = showActivity();
+@let _availableChatTargets = availableChatTargets();
+
+<div class="container">
+    <scrollbar>
+        <ng-content></ng-content>
+
+        @if (_stickies && _stickies.length) {
+            <div class="header" i18n="@@i18n.common.sticky">sticky</div>
+        }
+        @for (comment of _stickies; track 'sticky:' + (comment.id || comment.track_id)) {
+            <tab-comment [comment]="comment" [nx]="comment" [tables]="_stickies"></tab-comment>
+        }
+
+        <div class="header d-flex align-items-center">
+            <span class="flex-fill" i18n="@@i18n.common.comments">comments</span>
+            @if (_hasActivity['gitlab'] || _hasActivity['mantisbt'] || _hasActivity['jira'] || _hasActivity['github'] || _hasActivity['mattermost'] || _hasActivity['slack']) {
+                <div class="d-flex gap-2 align-items-center">
+                    <n class="pointer" [class.text-primary]="_showActivity['talvis']" [class.text-muted]="!_showActivity['talvis']" (click)="toggleActivity('talvis')" ngbTooltip="Toggle TALVIS comments" i18n-ngbTooltip="@@i18n.comments.toggleTalvisComments">nexus</n>
+                    @if (_hasActivity['gitlab']) {
+                        <n class="pointer" [class.text-primary]="_showActivity['gitlab']" [class.text-muted]="!_showActivity['gitlab']" (click)="toggleActivity('gitlab')" ngbTooltip="Toggle Git activity" i18n-ngbTooltip="@@i18n.comments.toggleGitActivity">git</n>
+                    }
+                    @if (_hasActivity['mantisbt']) {
+                        <n class="pointer" [class.text-primary]="_showActivity['mantisbt']" [class.text-muted]="!_showActivity['mantisbt']" (click)="toggleActivity('mantisbt')" ngbTooltip="Toggle MantisBT activity" i18n-ngbTooltip="@@i18n.comments.toggleMantisActivity">mantis</n>
+                    }
+                    @if (_hasActivity['jira']) {
+                        <n class="pointer" [class.text-primary]="_showActivity['jira']" [class.text-muted]="!_showActivity['jira']" (click)="toggleActivity('jira')" ngbTooltip="Toggle Jira activity" i18n-ngbTooltip="@@i18n.comments.toggleJiraActivity">jira</n>
+                    }
+                    @if (_hasActivity['github']) {
+                        <n class="pointer" [class.text-primary]="_showActivity['github']" [class.text-muted]="!_showActivity['github']" (click)="toggleActivity('github')" ngbTooltip="Toggle GitHub activity" i18n-ngbTooltip="@@i18n.comments.toggleGitHubActivity">github</n>
+                    }
+                    @if (_hasActivity['mattermost']) {
+                        <n class="pointer" [class.text-primary]="_showActivity['mattermost']" [class.text-muted]="!_showActivity['mattermost']" (click)="toggleActivity('mattermost')" ngbTooltip="Toggle Mattermost activity" i18n-ngbTooltip="@@i18n.comments.toggleMattermostActivity">mattermost</n>
+                    }
+                    @if (_hasActivity['slack']) {
+                        <n class="pointer" [class.text-primary]="_showActivity['slack']" [class.text-muted]="!_showActivity['slack']" (click)="toggleActivity('slack')" ngbTooltip="Toggle Slack activity" i18n-ngbTooltip="@@i18n.comments.toggleSlackActivity">slack</n>
+                    }
+                </div>
+            }
+        </div>
+        @for (group of _groupedComments; track group.date) {
+            <div class="day-header text-muted small px-3 py-1">{{ group.header }}</div>
+            @for (comment of group.comments; track 'comment:' + (comment.id || comment.track_id)) {
+                <tab-comment [comment]="comment" [nx]="comment" [tables]="group.comments"></tab-comment>
+            }
+        }
+    </scrollbar>
+    <div class="input-container p-2 border-top d-flex gap-2 align-items-start">
+        <div ngbDropdown placement="top-start" class="d-inline-block">
+            <button type="button" class="btn btn-sm btn-plain text-primary" ngbDropdownToggle>
+                <n>{{ getTargetIcon() }}</n>
+            </button>
+            <div ngbDropdownMenu>
+                <button ngbDropdownItem (click)="selectTarget('talvis')">
+                    <n class="me-2">nexus</n>
+                    <span i18n="@@i18n.comments.commentInTalvis">comment in TALVIS</span>
+                </button>
+                @for (target of _availableChatTargets; track target) {
+                    <button ngbDropdownItem (click)="selectTarget(target)">
+                        <n class="me-2">{{ target.icon() }}</n>
+                        <span>{{ target.channelName || target.constructor.name.replace('Plugin', '') }}</span>
+                    </button>
+                }
+            </div>
+        </div>
+        <textarea #commentTextarea class="form-control flex-fill" [placeholder]="getPlaceholder()" (keydown.control.enter)="onNew($event)" (input)="onTextareaInput($event)" style="resize: none; overflow-y: auto; min-height: 38px"></textarea>
+    </div>
+</div>

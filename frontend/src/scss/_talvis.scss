@@ -1,0 +1,68 @@
+@use 'colors';
+
+$nx-trigger-zone: 28px;
+
+table:has(tr.nx:not(.nx-no-trigger, .nx-no-trigger *)) tr > :last-child { padding-right: $nx-trigger-zone !important; box-sizing: content-box; }
+
+.nx {
+    -webkit-user-select: none;
+    user-select: none;
+    transition: background-color 0.05s linear;
+    cursor: context-menu;
+    &:is(li, div):not(.avatar, .nx-no-trigger, .nx-no-trigger *) { padding-right: $nx-trigger-zone !important; }
+    &:hover { background-color: rgba(colors.$primary, 0.1) !important; }
+    &.active { background-color: rgba(colors.$primary, 0.2) !important; }
+    &.active:hover { background-color: rgba(colors.$primary, 0.3) !important; }
+    li {
+        cursor: pointer;
+    }
+    &.avatar:hover {
+        box-shadow: 0 0 3px colors.$primary !important;
+    }
+    &.avatar.active img {
+        border: 3px colors.$primary solid;
+    }
+
+    rect, path, circle, ellipse, line, polyline, polygon {
+        transition: stroke 0.2s, fill 0.2s, opacity 0.2s;
+    }
+
+    &:hover rect:not([fill="transparent"]),
+    &:hover path:not([fill="none"]),
+    &:hover circle:not([fill="transparent"]),
+    &:hover ellipse,
+    &:hover polygon {
+        filter: brightness(1.1);
+    }
+
+    &.active rect:not([fill="transparent"]),
+    &.active path:not([fill="none"]),
+    &.active circle:not([fill="transparent"]),
+    &.active ellipse,
+    &.active polygon {
+        stroke: colors.$primary;
+        stroke-width: 3;
+        opacity: 1;
+    }
+}
+
+nx-contextmenu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1050;
+}
+
+nx-dropdown li {
+    position: relative;
+    text-transform: capitalize;
+}
+
+nx-dropdown li,
+.nx-dropdown li {
+    cursor: pointer;
+}
+
+nx-dropdown.dropstart > .dropdown-menu {
+    transform: translateX(-100%) translateZ(0) !important;
+}

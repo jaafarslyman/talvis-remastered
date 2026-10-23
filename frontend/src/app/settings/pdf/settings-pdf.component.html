@@ -1,0 +1,177 @@
+<toolbar>
+    @if (dirty()) {
+        <span class="badge bg-warning-subtle text-warning me-1" i18n="@@i18n.common.unsavedChanges">unsaved changes</span>
+    }
+    <label class="btn btn-sm btn-plain text-primary mb-0">
+        <span i18n="@@i18n.settings.pdf.replaceLogo">replace logo</span>
+        <input type="file" accept="image/png,image/jpeg,image/gif" hidden (change)="onLogoSelected($event)" />
+    </label>
+    @if (hasCustomLogo()) {
+        <button class="btn btn-sm btn-plain text-primary" (click)="removeLogo()" i18n="@@i18n.settings.pdf.removeLogo">remove uploaded logo</button>
+    }
+    @if (customized()) {
+        <button class="btn btn-sm btn-plain text-primary" (click)="revert()" i18n="@@i18n.settings.pdf.revert">reset to default template</button>
+    }
+    <button class="btn btn-sm btn-plain text-primary" [disabled]="rendering()" (click)="renderRealPdf()">
+        @if (rendering()) {
+            <spinner [inline]="true"></spinner>
+        }
+        <span i18n="@@i18n.settings.pdf.renderPdf">render real PDF</span>
+    </button>
+    <button class="btn btn-sm btn-primary" [disabled]="saving() || !dirty()" (click)="save()">
+        @if (saving()) {
+            <spinner [inline]="true"></spinner>
+        }
+        <span i18n="@@i18n.common.save">save</span>
+    </button>
+</toolbar>
+
+@if (loading()) {
+    <div class="pdf-editor d-flex align-items-center justify-content-center">
+        <spinner></spinner>
+    </div>
+} @else {
+    <div class="pdf-editor d-flex">
+        <div class="preview-pane">
+            <iframe #preview class="preview-frame" sandbox="allow-scripts" title="PDF preview"></iframe>
+        </div>
+
+        <div class="panel">
+            <div class="card h-100">
+                <div class="card-header p-0">
+                    <ul class="nav nav-tabs card-header-tabs m-0 px-2 pt-2">
+                        <li class="nav-item">
+                            <button class="nav-link" [class.active]="panelTab() === 'element'" (click)="panelTab.set('element')" i18n="@@i18n.settings.pdf.element">element</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" [class.active]="panelTab() === 'placeholders'" (click)="panelTab.set('placeholders')" i18n="@@i18n.settings.pdf.placeholders">placeholders</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" [class.active]="panelTab() === 'code'" (click)="panelTab.set('code')" i18n="@@i18n.settings.pdf.code">code</button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-body panel-body">
+                    @if (panelTab() === 'element') {
+                        @if (selected(); as sel) {
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <span class="badge bg-dark">&lt;{{ sel.tag }}&gt;</span>
+                                <button class="btn btn-sm btn-plain text-danger" (click)="removeSelected()" i18n="@@i18n.common.remove">remove</button>
+                            </div>
+
+                            @if (sel.text !== null) {
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted" for="pdfElementText" i18n="@@i18n.settings.pdf.text">text</label>
+                                    <textarea id="pdfElementText" class="form-control form-control-sm" rows="3" [ngModel]="sel.text" (ngModelChange)="setText($event)"></textarea>
+                                </div>
+                            }
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-12 col-md-7">
+                                    <label class="form-label small text-muted" for="pdfElementFontSize" i18n="@@i18n.settings.pdf.fontSize">font size</label>
+                                    <input id="pdfElementFontSize" class="form-control form-control-sm" [ngModel]="sel.fontSize" (ngModelChange)="onStyleInput('fontSize', 'fontSize', $event)" placeholder="11.5pt" />
+                                </div>
+                                <div class="col-12 col-md-5">
+                                    <label class="form-label small text-muted" for="pdfElementColor" i18n="@@i18n.settings.pdf.color">color</label>
+                                    <input id="pdfElementColor" type="color" class="form-control form-control-color form-control-sm w-100" [ngModel]="sel.color" (ngModelChange)="onStyleInput('color', 'color', $event)" />
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-label small text-muted" i18n="@@i18n.settings.pdf.style">style</div>
+                                <div class="btn-group w-100">
+                                    <button class="btn btn-sm btn-outline-primary" [class.active]="sel.bold" (click)="toggleBold()"><b>B</b></button>
+                                    <button class="btn btn-sm btn-outline-primary" [class.active]="sel.italic" (click)="toggleItalic()"><i>I</i></button>
+                                    <button class="btn btn-sm btn-outline-primary" [class.active]="sel.textAlign === 'left'" (click)="setAlign('left')">⯇</button>
+                                    <button class="btn btn-sm btn-outline-primary" [class.active]="sel.textAlign === 'center'" (click)="setAlign('center')">≡</button>
+                                    <button class="btn btn-sm btn-outline-primary" [class.active]="sel.textAlign === 'right'" (click)="setAlign('right')">⯈</button>
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label small text-muted" for="pdfElementMarginTop" i18n="@@i18n.settings.pdf.marginTop">margin top</label>
+                                    <input id="pdfElementMarginTop" class="form-control form-control-sm" [ngModel]="sel.marginTop" (ngModelChange)="onStyleInput('marginTop', 'marginTop', $event)" placeholder="0" />
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label small text-muted" for="pdfElementMarginBottom" i18n="@@i18n.settings.pdf.marginBottom">margin bottom</label>
+                                    <input id="pdfElementMarginBottom" class="form-control form-control-sm" [ngModel]="sel.marginBottom" (ngModelChange)="onStyleInput('marginBottom', 'marginBottom', $event)" placeholder="0" />
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label small text-muted" for="pdfElementPaddingTop" i18n="@@i18n.settings.pdf.paddingTop">padding top</label>
+                                    <input id="pdfElementPaddingTop" class="form-control form-control-sm" [ngModel]="sel.paddingTop" (ngModelChange)="onStyleInput('paddingTop', 'paddingTop', $event)" placeholder="0" />
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label small text-muted" for="pdfElementPaddingBottom" i18n="@@i18n.settings.pdf.paddingBottom">padding bottom</label>
+                                    <input id="pdfElementPaddingBottom" class="form-control form-control-sm" [ngModel]="sel.paddingBottom" (ngModelChange)="onStyleInput('paddingBottom', 'paddingBottom', $event)" placeholder="0" />
+                                </div>
+                            </div>
+                        } @else {
+                            <p class="text-muted small" i18n="@@i18n.settings.pdf.clickHint">Click an element in the preview to edit its text and styling.</p>
+                        }
+
+                        <hr />
+                        <div class="form-label small text-muted" i18n="@@i18n.settings.pdf.add">add</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-sm btn-plain text-primary" (click)="addBlock('text')" i18n="@@i18n.settings.pdf.addText">text block</button>
+                            <button class="btn btn-sm btn-plain text-primary" (click)="addBlock('divider')" i18n="@@i18n.settings.pdf.addDivider">divider</button>
+                            <button class="btn btn-sm btn-plain text-primary" (click)="addBlock('spacer')" i18n="@@i18n.settings.pdf.addSpacer">spacer</button>
+                        </div>
+                    } @else if (panelTab() === 'placeholders') {
+                        <p class="text-muted small" i18n="@@i18n.settings.pdf.placeholdersHint">Click a placeholder to append it to the selected text element. Without a selection it is copied to the clipboard. Placeholders are replaced in the preview and in every invoice, quote, reminder and travel expense report.</p>
+                        <div class="form-label small text-muted" i18n="@@i18n.settings.pdf.senderTokens">sender, from settings › general › company information</div>
+                        <ng-container *ngTemplateOutlet="placeholderList; context: { $implicit: senderPlaceholders() }"></ng-container>
+                        <div class="form-label small text-muted mt-3" i18n="@@i18n.settings.pdf.documentTokens">document, filled per document</div>
+                        <ng-container *ngTemplateOutlet="placeholderList; context: { $implicit: documentPlaceholders() }"></ng-container>
+                    } @else {
+                        <div class="d-flex flex-column h-100 gap-3">
+                            <div class="d-flex flex-column flex-grow-1 min-h-0">
+                                @if (selected(); as sel) {
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <div class="form-label small text-muted m-0">HTML — &lt;{{ sel.tag }}&gt;</div>
+                                        <button class="btn btn-sm btn-link p-0" (click)="editFullDocument()" i18n="@@i18n.settings.pdf.editFull">edit full document</button>
+                                    </div>
+                                    <app-code-editor class="flex-grow-1" language="html" [value]="selectedHtml()" (valueChange)="onScopedHtmlChange($event)"></app-code-editor>
+                                } @else {
+                                    <div class="form-label small text-muted mb-1" i18n="@@i18n.settings.pdf.htmlCode">HTML (template.html)</div>
+                                    <app-code-editor class="flex-grow-1" language="html" [value]="html()" (valueChange)="onFullHtmlChange($event)"></app-code-editor>
+                                }
+                            </div>
+                            <div class="d-flex flex-column flex-grow-1 min-h-0">
+                                <div class="form-label small text-muted mb-1" i18n="@@i18n.settings.pdf.cssCode">CSS (styles.css)</div>
+                                <app-code-editor class="flex-grow-1" language="css" [value]="css()" (valueChange)="onCssChange($event)"></app-code-editor>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<ng-template #placeholderList let-items>
+    <div class="list-group">
+        @for (p of items; track p.token) {
+            <button type="button" class="list-group-item list-group-item-action px-2 py-1" [title]="p.value" (click)="insertPlaceholder(p.token)">
+                <code class="small">[{{ p.token }}]</code>
+                <div class="small">{{ p.label }}</div>
+                @if (p.value) {
+                    <div class="small text-muted text-truncate">{{ p.value }}</div>
+                }
+            </button>
+        }
+    </div>
+</ng-template>
+
+@if (pdfUrl(); as url) {
+    <div class="pdf-overlay" role="presentation" (click)="closePdf()">
+        <div class="pdf-overlay-inner" role="presentation" (click)="$event.stopPropagation()">
+            <div class="d-flex align-items-center p-2 border-bottom">
+                <span class="fw-bold" i18n="@@i18n.settings.pdf.realPdf">real PDF (DomPDF)</span>
+                <button class="btn btn-sm ms-auto" (click)="closePdf()" i18n="@@i18n.common.close">close</button>
+            </div>
+            <iframe [src]="url" class="pdf-overlay-frame" title="rendered PDF"></iframe>
+        </div>
+    </div>
+}

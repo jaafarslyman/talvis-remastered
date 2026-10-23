@@ -1,0 +1,19 @@
+@let _company = company();
+<toolbar>
+    <div class="btn-group" ngbDropdown>
+        <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" ngbDropdownToggle>
+            <i>add</i>
+            <span class="visually-hidden" i18n="@@i18n.invoices.toggleDropdown">toggle dropdown</span>
+        </button>
+        <div class="dropdown-menu dropdown-menu-end" ngbDropdownMenu>
+            <button type="button" class="dropdown-item" (click)="onCreate(InvoiceItemType.Monthly)">
+                <span i18n="@@i18n.common.monthly">monthly</span>
+            </button>
+            <button type="button" class="dropdown-item" (click)="onCreate(InvoiceItemType.Yearly)">
+                <span i18n="@@i18n.common.yearly">yearly</span>
+            </button>
+        </div>
+    </div>
+</toolbar>
+
+<invoices-standing [parent]="_company"></invoices-standing>

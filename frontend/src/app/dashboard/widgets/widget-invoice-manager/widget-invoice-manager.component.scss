@@ -1,0 +1,17 @@
+
+:host ::ng-deep {
+    ul-compact, .list-group {
+        overflow: visible !important;
+    }
+    .list-group-item {
+        overflow: visible !important;
+    }
+}
+
+.badge-invoice-type {
+    color: #000 !important;
+
+    &[ngbDropdownToggle] {
+        border: none;
+    }
+}

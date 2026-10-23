@@ -1,0 +1,29 @@
+.user-card {
+  &.border-primary {
+    border-width: 2px;
+  }
+
+  &.selected {
+    background-color: rgba(var(--bs-primary-rgb), 0.15);
+  }
+}
+
+.user-list {
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--bs-border-radius);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--bs-border-radius);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+}

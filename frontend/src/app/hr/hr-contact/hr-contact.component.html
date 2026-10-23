@@ -1,0 +1,36 @@
+@let _users = users();
+@for (user of _users; track user.id) {
+    <div class="card mb-3">
+        <div class="card-header" i18n="@@i18n.hr.work_information">work information</div>
+        <div class="card-body">
+            <div class="input-group mb-3">
+                <span class="input-group-text" i18n="@@i18n.hr.workplace_zip">workplace zip</span>
+                <input type="number" class="form-control" [autosave]="user" autosaveKey="work_zip" [(ngModel)]="user.work_zip" placeholder="12345" />
+                <input type="text" class="form-control" [value]="getWorkplaceCity(user)" readonly placeholder="City" i18n-placeholder="@@i18n.common.city" />
+            </div>
+        </div>
+    </div>
+    @if (isAdmin()) {
+        @let _m365Address = user.getM365Address();
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span i18n="@@i18n.profile.microsoft365">Microsoft 365</span>
+                @if (_m365Address) {
+                    <button class="btn btn-sm btn-plain text-danger" (click)="disconnectM365(user)" ngbTooltip="disconnect Microsoft 365" i18n-ngbTooltip="@@i18n.profile.m365Disconnect"><i>link_off</i></button>
+                }
+            </div>
+            <ul class="list-group">
+                <li class="list-group-item">
+                    @if (_m365Address) {
+                        <div i18n="@@i18n.profile.m365LinkedWith">linked with {{ _m365Address }}</div>
+                    } @else {
+                        <div class="text-muted" i18n="@@i18n.hr.m365NotConnected">not connected — each person connects their own account in their profile</div>
+                    }
+                </li>
+            </ul>
+        </div>
+    }
+    @if (user) {
+        <app-vcard [object]="user"></app-vcard>
+    }
+}

@@ -1,0 +1,129 @@
+@let _project = project();
+
+@if (shouldShowBudgetChart()) {
+    <div class="card mb-3">
+        <div class="card-header" i18n="@@i18n.common.budgetAllocation">budget allocation</div>
+        <div class="budget-chart-wrapper w-100" [class.over-budget]="project().timePercentage() >= 1" [style]="budgetChart().wrapperStyle">
+            @if (budgetChart().options; as opts) {
+                <nx-echarts [options]="opts"></nx-echarts>
+            }
+        </div>
+    </div>
+}
+
+<div class="card mb-3">
+    <div class="card-header" i18n="@@i18n.common.analysis">analysis</div>
+    <ul class="list-group">
+        <li class="list-group-item hstack gap-2">
+            <div class="flex-fill" i18n="@@i18n.common.name">name</div>
+            <div class="text-truncate">{{ _project.name }}</div>
+            <i class="text-primary cursor-pointer" roles="project_manager" (click)="renameProject()" (keyup.enter)="renameProject()" tabindex="0" ngbTooltip="rename" i18n-ngbTooltip="@@i18n.common.rename">edit</i>
+        </li>
+        @if (!_project.is_internal && global.user?.hasRole('invoicing')) {
+            <li class="list-group-item hstack gap-2">
+                <div class="flex-fill" i18n="@@i18n.common.totalBudget">total budget</div>
+                <div>{{ _project.net | money }}</div>
+            </li>
+        }
+        @if (_project.is_time_based && global.user?.hasRole('invoicing')) {
+            <li class="list-group-item hstack gap-2">
+                <div class="flex-fill" i18n="@@i18n.common.last12Months">last 12 months</div>
+                <div>{{ _project.revenue_last_12 | money }}</div>
+            </li>
+        }
+        @if (!_project.is_internal && !_project.is_time_based && !_project.state.isPrepared() && global.user?.hasRole('invoicing')) {
+            <li class="list-group-item hstack gap-2">
+                <div class="flex-fill" i18n="@@i18n.common.remaining">remaining</div>
+                <div>{{ _project.net_remaining | money }}</div>
+            </li>
+        }
+        @if (!_project.is_time_based) {
+            <li class="list-group-item hstack gap-2">
+                @if (!_project.is_internal) {
+                    <chart-progress class="bg-transparent" [value]="_project.hours_invested" [max]="_project.work_estimated ?? 0" suffix="h" scss="primary" title="time" i18n-title="@@i18n.common.time"></chart-progress>
+                }
+            </li>
+        }
+        @if (_project.ml_predicted_hours !== null && _project.ml_predicted_hours !== undefined) {
+            <li class="list-group-item hstack gap-2">
+                <n class="local-ai-icon" [mlReliability]="'project_overrun'">local_ai</n>
+                <div class="flex-fill" i18n="@@i18n.common.duration">duration</div>
+                <div>{{ _project.ml_predicted_hours | number: '1.1-1' }}h</div>
+            </li>
+            <li class="list-group-item hstack gap-2">
+                <n class="local-ai-icon" [mlReliability]="'project_overrun'">local_ai</n>
+                <div class="flex-fill" i18n="@@i18n.common.remaining">remaining</div>
+                <div>{{ (_project.ml_predicted_hours - _project.hours_invested) | number: '1.1-1' }}h</div>
+            </li>
+        }
+        @if (_project.worksharesTotal() > 0) {
+            <li class="list-group-item hstack gap-2">
+                <div class="bg-transparent w-100 d-flex flex-column">
+                    <div class="info d-flex w-100">
+                        <div class="title text-truncate text-start flex-fill" i18n="@@i18n.common.workShares">work shares</div>
+                        <div class="desc text-end">{{ _project.hours_invested | number: '1.1-1' }}h</div>
+                    </div>
+                    <div class="progress w-100" style="height: 5px">
+                        @for (u of _project.var.workshares; track u) {
+                            <div class="progress-bar progress-bar-striped bg-gradient" [style.backgroundColor]="u.color" role="progressbar" [style.width.%]="_project.worksharePerc(u)" ngbTooltip="{{ u.name }} ({{ _project.worksharePerc(u) | number: '1.0-0' }}%)"></div>
+                        }
+                    </div>
+                </div>
+            </li>
+        }
+        @if (milestoneTotal() > 0) {
+            <li class="list-group-item hstack gap-2 cursor-pointer text-primary" routerLink="./milestones">
+                <div class="w-100 d-flex flex-column">
+                    <div class="info d-flex w-100">
+                        <div class="title text-truncate text-start flex-fill" i18n="@@i18n.common.milestones">milestones</div>
+                        <div class="desc text-end hstack gap-1">
+                            <span class="text-success" [ngbTooltip]="getMilestoneStateTooltip(2)">{{ _project.milestone_state_counts?.done || 0 }}</span>
+                            <span class="text-muted">|</span>
+                            <span class="text-primary" [ngbTooltip]="getMilestoneStateTooltip(1)">{{ _project.milestone_state_counts?.in_progress || 0 }}</span>
+                            <span class="text-muted">|</span>
+                            <span class="text-muted" [ngbTooltip]="getMilestoneStateTooltip(0)">{{ _project.milestone_state_counts?.todo || 0 }}</span>
+                        </div>
+                    </div>
+                    <div class="progress w-100" style="height: 5px">
+                        @for (state of milestoneStates(); track state) {
+                            <div class="progress-bar" [style.backgroundColor]="state.color" role="progressbar" [style.width.%]="getMilestonePerc(state.count)"></div>
+                        }
+                    </div>
+                </div>
+            </li>
+        }
+        <li class="list-group-item hstack gap-2">
+            <div class="flex-fill" i18n="@@i18n.common.created_at">created at</div>
+            <div>{{ _project.created_at | date }}</div>
+        </li>
+        @if (_project.finished_at) {
+            <li class="list-group-item hstack gap-2">
+                <div class="flex-fill" i18n="@@i18n.common.finishedAt">finished at</div>
+                <div>{{ _project.finished_at | date }}</div>
+            </li>
+        }
+        @if (_project.warranty_until) {
+            <li class="list-group-item hstack gap-2">
+                <div class="flex-fill" i18n="@@i18n.project.warrantyUntil">warranty until</div>
+                <div [class.text-warning]="_project.isInWarranty()">{{ _project.warranty_until | date }}</div>
+            </li>
+        }
+        @if (_project.is_time_based && !_project.is_internal) {
+            <li class="list-group-item hstack gap-2 cursor-pointer" roles="financial" routerLink="./invoicing">
+                <div class="flex-fill" i18n="@@i18n.common.unbilledFoci">unbilled foci</div>
+                <div class="p3-0">{{ _project.uninvoiced_hours | number: '1.1-1' }}h</div>
+                <div class="text-primary align-center">
+                    <i class="cursor-pointer">chevron_right</i>
+                </div>
+            </li>
+        }
+        @if (_project.state.isPrepared()) {
+            <li class="list-group-item hstack gap-2">
+                <div class="flex-fill" i18n="@@i18n.project.leadProbability">lead probability</div>
+                <div class="text-primary cursor-pointer" (click)="updateLeadProbability()" (keyup.enter)="updateLeadProbability()" tabindex="0">
+                    {{ (_project.lead_probability ?? 0) * 100 | number: '1.0-0' }}%
+                </div>
+            </li>
+        }
+    </ul>
+</div>

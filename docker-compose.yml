@@ -1,0 +1,79 @@
+name: talvis
+
+services:
+
+  talvis:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: talvis-dev:latest
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3200}:3200"
+      - "${BACKEND_PORT:-8000}:8000"
+      # Port 4200 (ng serve) is internal — accessed via nginx proxy on 3200
+      # Port 6001 (Reverb) is proxied through nginx at /app — no direct exposure needed
+    environment:
+      APP_URL:                   "${APP_URL:-http://localhost:8000}"
+      APP_AUTH:                  "${APP_AUTH:-token}"
+      CORS_ALLOWED_ORIGINS:      "${CORS_ALLOWED_ORIGINS:-}"
+      TRUSTED_PROXIES:           "${TRUSTED_PROXIES:-}"
+      DB_HOST:                   db
+      DB_PORT:                   3306
+      DB_DATABASE:               "${DB_DATABASE:-talvis}"
+      DB_USERNAME:               "${DB_USERNAME:-talvis}"
+      DB_PASSWORD:               "${DB_PASSWORD:-talvis}"
+      ADMIN_EMAIL:               "${ADMIN_EMAIL:-admin@example.com}"
+      ADMIN_PASSWORD:            "${ADMIN_PASSWORD:-changeme}"
+      MAIL_MAILER:               "${MAIL_MAILER:-log}"
+      MAIL_HOST:                 "${MAIL_HOST:-}"
+      MAIL_PORT:                 "${MAIL_PORT:-587}"
+      MAIL_FROM_ADDRESS:         "${MAIL_FROM_ADDRESS:-noreply@example.com}"
+      KEYCLOAK_BASE_URL:         "${KEYCLOAK_BASE_URL:-}"
+      KEYCLOAK_REALM:            "${KEYCLOAK_REALM:-}"
+      KEYCLOAK_CLIENT_ID:        "${KEYCLOAK_CLIENT_ID:-}"
+      KEYCLOAK_REALM_PUBLIC_KEY: "${KEYCLOAK_REALM_PUBLIC_KEY:-}"
+      LOG_LEVEL:                 "${LOG_LEVEL:-debug}"
+      REVERB_APP_ID:             "${REVERB_APP_ID:-talvis}"
+      REVERB_APP_KEY:            "${REVERB_APP_KEY:-talvis-key}"
+      REVERB_APP_SECRET:         "${REVERB_APP_SECRET:-talvis-secret}"
+      REVERB_HOST:               "0.0.0.0"
+      REVERB_PORT:               "6001"
+      REVERB_SCHEME:             "${REVERB_SCHEME:-http}"
+    volumes:
+      - ./backend:/var/www/backend
+      - ./frontend:/var/www/frontend
+      - backend_vendor:/var/www/backend/vendor        # persists composer packages
+      - frontend_modules:/var/www/frontend/node_modules  # persists npm packages
+      - storage_data:/var/www/backend/storage
+      - ./docker/nginx.dev.conf:/etc/nginx/nginx.conf
+      - ./docker/supervisord.dev.conf:/etc/supervisor/conf.d/supervisord.conf
+      - ./docker/ng-proxy.conf.json:/etc/talvis/ng-proxy.conf.json
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    ports:
+      - "${DB_PORT_HOST:-3308}:3306"
+    environment:
+      MYSQL_DATABASE:      "${DB_DATABASE:-talvis}"
+      MYSQL_USER:          "${DB_USERNAME:-talvis}"
+      MYSQL_PASSWORD:      "${DB_PASSWORD:-talvis}"
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:-talvis_root}"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db_data:
+  storage_data:
+  backend_vendor:
+  frontend_modules:

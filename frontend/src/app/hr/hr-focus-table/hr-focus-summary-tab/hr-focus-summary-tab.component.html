@@ -1,0 +1,71 @@
+@let _user = trackedUser();
+@let _stats = stats();
+
+<activity-tab icon="bar_chart" i18n-label="@@i18n.activityTab.summary" label="summary">
+    <div class="container">
+        <scrollbar>
+            <div class="p-3">
+                <div class="text-center mb-3">
+                    @for (_ of [_user.id]; track _) {
+                        <avatar [object]="_user" size="lg" class="d-inline-block my-4 mb-6"></avatar>
+                    }
+                    <div class="fw-semibold">{{ _user.getName() }}</div>
+                </div>
+
+                @if (_stats) {
+                    <div class="small text-muted mb-3 text-center">
+                        <i class="align-middle" style="font-size: 1rem">date_range</i>
+                        {{ _stats.dateFrom }} – {{ _stats.dateTo }}
+                    </div>
+
+                    <div echarts [options]="_stats.donutOptions" style="height: 200px"></div>
+
+                    <div class="d-flex flex-wrap justify-content-around small mt-1 mb-3 gap-1">
+                        <span><span class="me-1" style="color: #20c997">●</span>Paid: {{ _stats.totalPaid | number: '1.1-1' }}h</span>
+                        <span><span class="me-1" style="color: #6c757d">●</span>Unpaid: {{ _stats.totalUnpaid | number: '1.1-1' }}h</span>
+                        @if (_stats.totalVacation > 0) {
+                            <span><span class="me-1" style="color: #0dcaf0">●</span>Vacation: {{ _stats.totalVacation | number: '1.1-1' }}h</span>
+                        }
+                        @if (_stats.totalSick > 0) {
+                            <span><span class="me-1" style="color: #ffc107">●</span>Sick: {{ _stats.totalSick | number: '1.1-1' }}h</span>
+                        }
+                        @if (_stats.gap > 0) {
+                            <span><span class="me-1" style="color: #dc3545">●</span>Gap: {{ _stats.gap | number: '1.1-1' }}h</span>
+                        } @else if (_stats.gap < 0) {
+                            <span><span class="me-1" style="color: #fd7e14">●</span>Overtime: +{{ -_stats.gap | number: '1.1-1' }}h</span>
+                        } @else {
+                            <span class="text-success"><i class="align-middle" style="font-size: 0.9rem">check_circle</i> On track</span>
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small text-muted mb-1">
+                            <span>Paid vs. Unpaid</span>
+                            <span>{{ _stats.paidPercent | number: '1.0-0' }}% paid</span>
+                        </div>
+                        <div class="progress" style="height: 6px">
+                            <div class="progress-bar" style="background: #20c997" [style.width.%]="_stats.paidPercent"></div>
+                            <div class="progress-bar bg-dark-grey" [style.width.%]="100 - _stats.paidPercent"></div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between small">
+                        <div class="text-muted">
+                            Expected<br /><strong class="text-light fs-6">{{ _stats.totalExpected | number: '1.1-1' }}h</strong>
+                        </div>
+                        <div class="text-center text-muted">
+                            Actual<br /><strong class="fs-6" [class.text-success]="_stats.totalActual >= _stats.totalExpected" [class.text-warning]="_stats.totalActual < _stats.totalExpected">{{ _stats.totalActual | number: '1.1-1' }}h</strong>
+                        </div>
+                        <div class="text-end text-muted">
+                            {{ _stats.gap < 0 ? 'Overtime' : 'Gap' }}<br />
+                            <strong class="fs-6" [class.text-danger]="_stats.gap > 0" [class.text-warning]="_stats.gap < 0" [class.text-success]="_stats.gap === 0">
+                                {{ (_stats.gap < 0 ? -_stats.gap : _stats.gap) | number: '1.1-1' }}h
+                            </strong>
+                            <div class="text-muted" style="font-size: 0.7rem">{{ _stats.totalExpected > 0 ? (((_stats.gap < 0 ? -_stats.gap : _stats.gap) / _stats.totalExpected) * 100 | number: '1.0-0') : 0 }}%</div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </scrollbar>
+    </div>
+</activity-tab>

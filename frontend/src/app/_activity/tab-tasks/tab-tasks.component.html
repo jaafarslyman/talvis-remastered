@@ -1,0 +1,24 @@
+<activity-tab icon="check_box" i18n-label="@@i18n.common.tasks" label="tasks">
+    @let _user = user();
+    <div class="container">
+        @if (_user) {
+            <scrollbar>
+                @if (_user.hasRole('hr')) {
+                    <tab-tasks-hr (countChanged)="onCount('hr', $event)"></tab-tasks-hr>
+                }
+                <tab-tasks-sentinels (countChanged)="onCount('sentinels', $event)"></tab-tasks-sentinels>
+                @if (_user.hasRole('marketing')) {
+                    <tab-tasks-remarketing></tab-tasks-remarketing>
+                }
+                <tab-tasks-milestones (countChanged)="onCount('milestones', $event)"></tab-tasks-milestones>
+                @if (_user.hasRole('project_manager')) {
+                    <tab-tasks-missing-git></tab-tasks-missing-git>
+                }
+                <tab-tasks-plugin-tasks [active]="opened()"></tab-tasks-plugin-tasks>
+                @if (_user.hasRole('marketing')) {
+                    <tab-tasks-marketing-activities></tab-tasks-marketing-activities>
+                }
+            </scrollbar>
+        }
+    </div>
+</activity-tab>

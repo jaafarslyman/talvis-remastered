@@ -1,0 +1,68 @@
+@use 'var';
+
+scrollbar {
+    height: calc(100vh - var.$header-height);
+    display: block;
+}
+
+.list-group-item {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.06);
+    }
+
+    &.active, &.router-active {
+        background-color: var(--bs-primary);
+        color: white;
+
+        .text-muted, .nav-icon {
+            color: rgba(255, 255, 255, 0.65) !important;
+        }
+
+        .badge.bg-primary {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+            color: white !important;
+        }
+    }
+}
+
+.nav-icon {
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    color: var(--bs-secondary-color);
+}
+
+.status-filter-btn {
+    user-select: none;
+    transition: opacity 0.15s ease;
+
+    .status-filter-icon {
+        font-size: 0.8rem;
+    }
+
+    .status-filter-count {
+        font-size: 0.7rem;
+        font-weight: 600;
+        line-height: 1;
+    }
+}
+
+.prospect-info {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.status-icon {
+    font-size: 0.85rem;
+}
+
+.bg-cyan {
+    background-color: #0dcaf0 !important;
+}
+
+.badge {
+    font-size: 0.75rem;
+    text-shadow: none;
+}

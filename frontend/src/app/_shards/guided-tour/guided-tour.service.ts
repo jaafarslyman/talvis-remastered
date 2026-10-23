@@ -1,0 +1,102 @@
+import { ElementRef, Service } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+import { storageGet, storageSet } from '@constants/storage';
+
+export interface GuidedSlide {
+    id: string;
+    title?: string;
+    content: string;
+    focusSelector?: string;
+    focusElement?: HTMLElement | ElementRef;
+}
+
+interface InternalSlide extends GuidedSlide {
+    domDepth: number;
+}
+
+const SEEN_KEY = 'nexus_guide_seen';
+const DISABLED_KEY = 'nexus_guide_disabled';
+
+@Service()
+export class GuidedTourService {
+    #seenIds = new Set<string>();
+    #disabled = false;
+    #queue: InternalSlide[] = [];
+    #sessionTotal = 0;
+    #sessionDone = 0;
+
+    readonly currentSlide$ = new BehaviorSubject<InternalSlide | null>(null);
+    readonly queueLength$ = new BehaviorSubject<number>(0);
+    readonly sessionTotal$ = new BehaviorSubject<number>(0);
+    readonly sessionDone$ = new BehaviorSubject<number>(0);
+
+    get isDisabled(): boolean {
+        return this.#disabled;
+    }
+
+    constructor() {
+        this.#loadFromStorage();
+    }
+
+    register(slides: GuidedSlide[], domDepth: number): void {
+        if (this.#disabled) return;
+
+        const newSlides: InternalSlide[] = slides.filter((s) => !this.#seenIds.has(s.id)).map((s) => ({ ...s, domDepth }));
+
+        if (!newSlides.length) return;
+
+        this.#queue = [...this.#queue, ...newSlides].sort((a, b) => a.domDepth - b.domDepth);
+
+        this.#sessionTotal += newSlides.length;
+        this.sessionTotal$.next(this.#sessionTotal);
+        this.queueLength$.next(this.#queue.length);
+
+        if (!this.currentSlide$.value) {
+            this.#showCurrent();
+        }
+    }
+
+    next(): void {
+        const current = this.currentSlide$.value;
+        if (!current) return;
+
+        this.#markSeen(current.id);
+        this.#queue = this.#queue.filter((s) => s.id !== current.id);
+        this.#sessionDone++;
+        this.sessionDone$.next(this.#sessionDone);
+
+        if (this.#queue.length > 0) {
+            this.#showCurrent();
+        } else {
+            this.currentSlide$.next(null);
+            this.queueLength$.next(0);
+        }
+    }
+
+    disable(): void {
+        this.#disabled = true;
+        storageSet(DISABLED_KEY, true);
+        this.#queue = [];
+        this.currentSlide$.next(null);
+        this.queueLength$.next(0);
+    }
+
+    #showCurrent(): void {
+        if (!this.#queue.length) return;
+        this.queueLength$.next(this.#queue.length);
+        this.currentSlide$.next(this.#queue[0]);
+    }
+
+    #markSeen(id: string): void {
+        this.#seenIds.add(id);
+        storageSet(SEEN_KEY, [...this.#seenIds]);
+    }
+
+    #loadFromStorage(): void {
+        if (storageGet(DISABLED_KEY, false)) {
+            this.#disabled = true;
+            return;
+        }
+        this.#seenIds = new Set(storageGet<string[]>(SEEN_KEY, []));
+    }
+}

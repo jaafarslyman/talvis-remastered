@@ -1,0 +1,277 @@
+@let _isLoading = isLoading();
+@let _showChannelModal = showChannelModal();
+@let _showWorkflowModal = showWorkflowModal();
+@let _showMetricModal = showMetricModal();
+@let _initiative = initiative();
+@let _chartOptions = chartOptions();
+@let _donutChartOptions = donutChartOptions();
+@let _availableWorkflows = availableWorkflows();
+@let _availableMetrics = availableMetrics();
+
+<div class="row">
+    <!-- Left: Initiative detail card -->
+    <div class="col-12 col-md-6">
+        @if (_isLoading) {
+            <div class="card">
+                <div class="card-body text-center p-4">
+                    <spinner></spinner>
+                </div>
+            </div>
+        }
+
+        @if (!_isLoading && _initiative) {
+            <div class="card mb-3">
+                <!-- Header -->
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>{{ _initiative.name }}</div>
+                    <div class="d-flex align-items-center gap-1">
+                        @if (_initiative.users?.length) {
+                            @for (user of _initiative.users; track user.id) {
+                                <avatar [object]="user" [nx]="user" [tables]="_initiative.users" [nxContext]="{ initiative: _initiative, component: this }" context="initiative_subscriber"> </avatar>
+                            }
+                        }
+                        @if (!isSubscribed()) {
+                            <button class="btn btn-plain btn-sm rounded-circle text-primary" (click)="subscribe()" tabindex="0" (keydown.enter)="subscribe()" i18n-ngbTooltip="@@i18n.uptime.subscribe" ngbTooltip="subscribe">
+                                <i class="text-primary">notifications_active</i>
+                            </button>
+                        }
+                        @if (isSubscribed()) {
+                            <button class="btn btn-plain btn-sm rounded-circle" (click)="unsubscribe()" tabindex="0" (keydown.enter)="unsubscribe()" i18n-ngbTooltip="@@i18n.uptime.unsubscribe" ngbTooltip="unsubscribe">
+                                <i class="text-primary">notifications_off</i>
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <!-- Description row -->
+                @if (_initiative.description) {
+                    <div class="px-3 py-2">
+                        <p class="small text-muted mb-0">{{ _initiative.description }}</p>
+                    </div>
+                }
+
+                <!-- Prospect Development Chart -->
+                @if (_chartOptions) {
+                    <div class="card-body py-2 px-0 d-flex gap-2 align-items-center">
+                        <div class="w-100 overflow-hidden">
+                            <nx-echarts [options]="_chartOptions"></nx-echarts>
+                        </div>
+                        @if (_donutChartOptions) {
+                            <div class="flex-shrink-0" style="margin-bottom: -10px">
+                                <nx-echarts [options]="_donutChartOptions"></nx-echarts>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <!-- Timeline -->
+                @if (_initiative.start_date || _initiative.end_date) {
+                    <div class="card-body py-2">
+                        @if (_initiative.start_date) {
+                            <div class="small text-muted">
+                                <span i18n="@@i18n.common.start">start</span><span class="notranslate">:</span>
+                                {{ _initiative.start_date | date: 'mediumDate' }}
+                            </div>
+                        }
+                        @if (_initiative.end_date) {
+                            <div class="small text-muted">
+                                <span i18n="@@i18n.common.end">end</span><span class="notranslate">:</span>
+                                {{ _initiative.end_date | date: 'mediumDate' }}
+                            </div>
+                        }
+                    </div>
+                }
+
+                <ul class="list-group list-group-flush">
+                    <!-- Channels -->
+
+                    <li class="list-group-item hstack gap-2 align-items-center">
+                        <div class="flex-fill" i18n="@@i18n.marketing.channels">channels</div>
+                        @if (_initiative.channels?.length) {
+                            <div class="hstack gap-1">
+                                @for (channel of _initiative.channels; track channel.id) {
+                                    <span class="badge cursor-pointer bg-dark text-white" (click)="removeChannel(channel.id)" tabindex="0" (keydown.enter)="removeChannel(channel.id)" i18n-title="@@i18n.marketing.click_to_remove_channel" title="click to remove channel">
+                                        @if (channel.pivot?.is_primary) {
+                                            <i class="me-1 text-yellow" style="font-size: 0.75rem">star</i>
+                                        }
+                                        {{ channel.name }}
+                                    </span>
+                                }
+                            </div>
+                        } @else {
+                            <span class="text-muted small" i18n="@@i18n.marketing.no_channels_assigned">no channels assigned</span>
+                        }
+                        <button class="btn btn-plain text-primary m-0 p-0" (click)="showChannelModal.set(true)" tabindex="0" (keydown.enter)="showChannelModal.set(true)">
+                            <i class="text-primary">add</i>
+                        </button>
+                    </li>
+
+                    <!-- Workflows -->
+                    <li class="list-group-item hstack gap-2 align-items-center">
+                        <div class="flex-fill" i18n="@@i18n.marketing.workflows">workflows</div>
+                        @if (_initiative.workflows?.length) {
+                            <div class="hstack gap-1">
+                                @for (workflow of _initiative.workflows; track workflow.id) {
+                                    <span class="badge bg-dark" [nx]="workflow" [tables]="_initiative.workflows" [nxContext]="{ initiative: _initiative, component: this }" [class.text-white]="workflow.is_active" [class.text-muted]="!workflow.is_active" context="initiative_details" tabindex="0">
+                                        {{ workflow.name }}
+                                    </span>
+                                }
+                            </div>
+                        } @else {
+                            <span class="text-muted small" i18n="@@i18n.marketing.no_workflows_assigned">no workflows assigned</span>
+                        }
+                        <button class="btn btn-plain text-primary m-0 p-0" (click)="showWorkflowModal.set(true)" tabindex="0" (keydown.enter)="showWorkflowModal.set(true)">
+                            <i class="text-primary">add</i>
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Activity Visualization -->
+                @if (_initiative.initiative_activities && _initiative.initiative_activities.length > 0) {
+                    <activity-table [activities]="_initiative.initiative_activities" [prospectsCount]="_initiative.prospects_count || 0" [activityRoute]="['activity']" [allMetrics]="_availableMetrics"> </activity-table>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Right: Activity detail (nested router-outlet) + activities list -->
+    <div class="col-12 col-md-6">
+        <router-outlet></router-outlet>
+    </div>
+</div>
+
+<!-- Assign Channel Modal -->
+<div class="modal fade" [class.show]="_showChannelModal" [style.display]="_showChannelModal ? 'block' : 'none'" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title" i18n="@@i18n.marketing.assign_channel">assign channel</span>
+                <button type="button" class="btn-close" (click)="showChannelModal.set(false)" tabindex="0" (keydown.enter)="showChannelModal.set(false)" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label for="channelSelect" class="form-label">
+                            <span i18n="@@i18n.marketing.leadSourceChannel">lead source / channel</span>
+                            <span class="notranslate"> *</span>
+                        </label>
+                        <select class="form-select" id="channelSelect" [(ngModel)]="selectedChannelId" name="channel">
+                            <option value="" i18n="@@i18n.marketing.select_channel">select a channel...</option>
+                            @for (source of availableLeadSources; track source.id) {
+                                <option [value]="source.id">
+                                    {{ source.name }}
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isPrimaryChannel" [ngModel]="isPrimaryChannel()" (ngModelChange)="isPrimaryChannel.set($event)" name="isPrimary" />
+                            <label class="form-check-label" for="isPrimaryChannel" i18n="@@i18n.marketing.primary_channel">primary channel</label>
+                        </div>
+                        <small class="text-muted" i18n="@@i18n.marketing.primary_channel_description">primary channel will be used as the default for new prospects</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn" (click)="showChannelModal.set(false)" tabindex="0" (keydown.enter)="showChannelModal.set(false)" i18n="@@i18n.common.cancel">cancel</button>
+                <button type="button" class="btn btn-primary" hotkey="CTRL+ENTER" (click)="assignChannel()" tabindex="0" (keydown.enter)="assignChannel()" [disabled]="!selectedChannelId" i18n="@@i18n.marketing.assign_channel">assign channel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Select Workflow Modal -->
+<div class="modal fade" [class.show]="_showWorkflowModal" [style.display]="_showWorkflowModal ? 'block' : 'none'" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title" i18n="@@i18n.marketing.attach_workflow">attach workflow</span>
+                <button type="button" class="btn-close" (click)="resetWorkflowForm()" tabindex="0" (keydown.enter)="resetWorkflowForm()" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label for="workflowSelect" class="form-label">
+                            <span i18n="@@i18n.marketing.selectWorkflow">select workflow</span>
+                            <span class="notranslate"> *</span>
+                        </label>
+                        <select class="form-select" id="workflowSelect" [(ngModel)]="selectedWorkflowId" name="workflow">
+                            <option value="" i18n="@@i18n.marketing.select_workflow">select a workflow...</option>
+                            @for (workflow of _availableWorkflows; track workflow.id) {
+                                <option [value]="workflow.id">
+                                    {{ workflow.name }}
+                                    @if (workflow.is_active) {
+                                        <span>
+                                            <span class="notranslate">(</span>
+                                            <span i18n="@@i18n.common.active">active</span>
+                                            <span class="notranslate">)</span>
+                                        </span>
+                                    } @else {
+                                        <span>
+                                            <span class="notranslate">(</span>
+                                            <span i18n="@@i18n.common.inactive">inactive</span>
+                                            <span class="notranslate">)</span>
+                                        </span>
+                                    }
+                                </option>
+                            }
+                        </select>
+                        @if (_availableWorkflows.length === 0) {
+                            <small class="text-muted" i18n="@@i18n.marketing.no_workflows_create_first">no workflows available. create workflows in the workflows tab first.</small>
+                        }
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn" (click)="resetWorkflowForm()" tabindex="0" (keydown.enter)="resetWorkflowForm()" i18n="@@i18n.common.cancel">cancel</button>
+                <button type="button" class="btn btn-primary" hotkey="CTRL+ENTER" (click)="attachWorkflow()" tabindex="0" (keydown.enter)="attachWorkflow()" [disabled]="!selectedWorkflowId" i18n="@@i18n.marketing.attach_workflow">attach workflow</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Select Metric Modal -->
+<div class="modal fade" [class.show]="_showMetricModal" [style.display]="_showMetricModal ? 'block' : 'none'" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title" i18n="@@i18n.marketing.add_performance_metric">add performance metric</span>
+                <button type="button" class="btn-close" (click)="resetMetricForm()" tabindex="0" (keydown.enter)="resetMetricForm()" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label for="metricSelect" class="form-label">
+                            <span i18n="@@i18n.marketing.selectMetric">select metric</span>
+                            <span class="notranslate"> *</span>
+                        </label>
+                        <select class="form-select" id="metricSelect" [(ngModel)]="selectedMetricId" name="metric">
+                            <option value="" i18n="@@i18n.marketing.select_metric">select a metric...</option>
+                            @for (metric of _availableMetrics; track metric.id) {
+                                <option [value]="metric.id">{{ metric.name }} ({{ metric.metric_type }})</option>
+                            }
+                        </select>
+                        @if (_availableMetrics.length === 0) {
+                            <small class="text-muted" i18n="@@i18n.marketing.no_metrics_auto_created">no metrics available. metrics are created automatically when workflows are seeded.</small>
+                        }
+                    </div>
+                    <div class="mb-3">
+                        <label for="metricTarget" class="form-label" i18n="@@i18n.marketing.target_value_optional">target value (optional)</label>
+                        <input type="number" class="form-control" id="metricTarget" [(ngModel)]="metricTargetValue" name="targetValue" placeholder="e.g., 100" i18n-placeholder="@@i18n.marketing.target_value_placeholder" />
+                        <small class="text-muted" i18n="@@i18n.marketing.set_target_value_description">set a target value for this initiative</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn" (click)="resetMetricForm()" tabindex="0" (keydown.enter)="resetMetricForm()" i18n="@@i18n.common.cancel">cancel</button>
+                <button type="button" class="btn btn-primary" hotkey="CTRL+ENTER" (click)="attachMetric()" tabindex="0" (keydown.enter)="attachMetric()" [disabled]="!selectedMetricId" i18n="@@i18n.marketing.add_metric">add metric</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Backdrops -->
+@if (showChannelModal() || showWorkflowModal() || showMetricModal()) {
+    <div class="modal-backdrop fade show" tabindex="0"></div>
+}

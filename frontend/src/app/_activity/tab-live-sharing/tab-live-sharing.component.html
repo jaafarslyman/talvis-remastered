@@ -1,0 +1,54 @@
+@let _wsConnected = wsConnected();
+@let _sharingEnabled = sharingEnabled();
+@let _activeSharings = activeSharings();
+
+<activity-tab icon="share_location" i18n-label="@@i18n.liveSharing.title" label="live sharing" [hidden]="!_wsConnected || !featureEnabled()" [componentType]="componentType">
+    <div class="container">
+        <scrollbar>
+            <div class="p-3">
+                <button class="btn w-100" [class.btn-success]="_sharingEnabled" [class.btn-dark]="!_sharingEnabled" (click)="toggleSharing()" [disabled]="!_wsConnected">
+                    <i class="material-icons">{{ _sharingEnabled ? 'visibility' : 'visibility_off' }}</i>
+                    {{ _sharingEnabled ? 'Stop Sharing' : 'Start Sharing' }}
+                </button>
+            </div>
+
+            <!-- Active Users List -->
+            <div class="header">
+                <h6 class="mb-0">Active Users ({{ _activeSharings.length }})</h6>
+            </div>
+            <ul class="list-group list-group-flush">
+                @if (_activeSharings.length === 0) {
+                    <li class="list-group-item text-muted text-center" i18n="@@i18n.common.noUsersSharing">no users sharing</li>
+                }
+
+                @for (sharing of _activeSharings; track sharing.userId) {
+                    <li class="list-group-item bg-dark d-flex align-items-center user-item cursor-pointer" [class.off-tab]="sharing.visible === false" (click)="navigateToUser(sharing)" (keyup.enter)="navigateToUser(sharing)" tabindex="0">
+                        <img class="avatar avatar-sm me-2" [src]="userIconForSharing(sharing)" alt="User Icon" />
+                        <div class="flex-grow-1">
+                            <div class="fw-bold">
+                                {{ sharing.userName }}
+                                @if (sharing.visible === false) {
+                                    <small class="badge bg-secondary ms-1" i18n="@@i18n.common.offtab">off-tab</small>
+                                }
+                            </div>
+                            <small class="text-muted">{{ sharing.url }}</small>
+                        </div>
+                        <i class="text-muted">arrow_forward</i>
+                    </li>
+                }
+            </ul>
+
+            <!-- Info -->
+            <div class="mt-3 p-3">
+                <small class="text-muted d-block mb-2">
+                    <i>info</i>
+                    Cursors visible only when on the same page
+                </small>
+                <small class="text-muted d-block">
+                    <i>keyboard</i>
+                    Press <kbd>CTRL+M</kbd> to send a quick message to all users
+                </small>
+            </div>
+        </scrollbar>
+    </div>
+</activity-tab>

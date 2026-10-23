@@ -1,0 +1,27 @@
+<toolbar>
+    <div class="btn-group" ngbDropdown>
+        <button class="btn btn-primary" role="alert" (click)="makeInvoice()">
+            <n>invoice</n>
+            <div i18n="@@i18n.invoice.create{invoiceNumber}">create invoice {{ invoiceNumber }}</div>
+        </button>
+        <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" ngbDropdownToggle>
+            <span class="visually-hidden" i18n="@@i18n.invoices.toggleDropdown">toggle dropdown</span>
+        </button>
+        <div class="dropdown-menu dropdown-menu-end" ngbDropdownMenu>
+            <button class="dropdown-item hstack gap-2" (click)="makeDraftInvoice()">
+                <n>invoice</n>
+                <span class="flex-fill" i18n="@@i18n.invoice.draftInvoice">draft invoice</span>
+            </button>
+        </div>
+    </div>
+    @if (hasInactiveRepeatingItems()) {
+    <button class="btn btn-plain text-primary" (click)="activateRepeatingItems()">
+        <i>schedule</i>
+        <div i18n="@@i18n.invoice.activateRepeatingItems">activate recurring items</div>
+    </button>
+    }
+</toolbar>
+
+<scrollbar>
+    <invoice-prepare-wrapper [parent]="company()" [additionalBillingConsiderations]="backendConsiderations()"></invoice-prepare-wrapper>
+</scrollbar>

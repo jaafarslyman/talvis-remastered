@@ -1,0 +1,169 @@
+@let _isLoading = isLoading();
+@let _prospects = prospects();
+@let _filteredProspects = filteredProspects();
+@let _initiatives = initiatives();
+@let _statusFilters = statusFilters();
+@let _statusCounts = statusCounts();
+@let _initiativeFilter = initiativeFilter();
+@let _userFilter = userFilter();
+@let _totalOverdueCount = totalOverdueCount();
+
+<toolbar>
+    @if (_totalOverdueCount > 0) {
+        <div ngbDropdown placement="bottom-end">
+            <button class="btn btn-sm btn-plain text-primary dropdown-toggle-simple hstack gap-1" ngbDropdownToggle i18n-ngbTooltip="@@i18n.marketing.move_overdue" ngbTooltip="move overdue activities">
+                <i>event_repeat</i>
+            </button>
+            <div ngbDropdownMenu>
+                @for (_ of rescheduleTargets; track _.label) {
+                    <button ngbDropdownItem (click)="rescheduleOverdue(_.date())">{{ _.label }}</button>
+                }
+            </div>
+        </div>
+    }
+    <div ngbDropdown placement="bottom-end">
+        <button class="btn btn-sm btn-plain dropdown-toggle-simple d-flex align-items-center gap-2 px-2 py-1" ngbDropdownToggle>
+            @if (!_userFilter) {
+                <i class="align-middle" style="font-size: 1rem">group</i>
+                <span class="small" i18n="@@i18n.common.all_users">all users</span>
+            } @else {
+                <avatar [object]="selectedUser()" size="sm"></avatar>
+                <span class="small">{{ selectedUserName() }}</span>
+            }
+        </button>
+        <div ngbDropdownMenu>
+            <button ngbDropdownItem class="d-flex align-items-center gap-2" (click)="setUserFilter(null)">
+                <i class="align-middle">group</i>
+                <span i18n="@@i18n.common.all_users">all users</span>
+            </button>
+            <div class="dropdown-divider"></div>
+            @for (user of availableUsers(); track user.id) {
+                <button ngbDropdownItem class="d-flex align-items-center gap-2" (click)="setUserFilter(user.id)">
+                    <avatar [object]="user" size="sm"></avatar>
+                    <span>{{ user.fullName() }}</span>
+                </button>
+            }
+        </div>
+    </div>
+</toolbar>
+
+<div class="row" col-slider>
+    <div class="col-12 col-md-3">
+        <div class="card mb-3 sticky-side">
+            <div class="card-header hstack gap-2">
+                <div ngbDropdown class="flex-fill" placement="bottom-start">
+                    <button class="btn btn-plain btn-sm dropdown-toggle-simple hstack gap-2 p-0 w-100 text-start" ngbDropdownToggle>
+                        <span class="flex-fill hstack gap-1">
+                            @if (!_initiativeFilter) {
+                                <span i18n="@@i18n.marketing.prospects">prospects</span>
+                            } @else {
+                                <span>{{ selectedInitiativeName() }}</span>
+                            }
+                            <i class="text-muted">arrow_drop_down</i>
+                        </span>
+                        @if (!_initiativeFilter && _totalOverdueCount > 0) {
+                            <span class="badge bg-danger rounded-pill">{{ _totalOverdueCount }}</span>
+                        }
+                        @if (_initiativeFilter && selectedInitiativeOverdueCount() > 0) {
+                            <span class="badge bg-danger rounded-pill">{{ selectedInitiativeOverdueCount() }}</span>
+                        }
+                    </button>
+                    <div ngbDropdownMenu>
+                        <button ngbDropdownItem class="d-flex align-items-center gap-2" (click)="setInitiativeFilter(null)">
+                            <span class="flex-fill" i18n="@@i18n.marketing.all_initiatives">all initiatives</span>
+                            @if (_totalOverdueCount > 0) {
+                                <span class="badge bg-danger rounded-pill">{{ _totalOverdueCount }}</span>
+                            }
+                        </button>
+                        <div class="dropdown-divider"></div>
+                        @for (initiative of _initiatives; track initiative.id) {
+                            <button ngbDropdownItem class="d-flex align-items-center gap-2" (click)="setInitiativeFilter(initiative.id)">
+                                <span class="flex-fill" [class.text-muted]="!isSubscribedToInitiative(initiative)">{{ initiative.name }}</span>
+                                @if ((initiative.overdue_prospects_count ?? 0) > 0) {
+                                    <span class="badge bg-danger rounded-pill">{{ initiative.overdue_prospects_count }}</span>
+                                }
+                            </button>
+                        }
+                    </div>
+                </div>
+                @if (!_isLoading) {
+                    <span class="badge bg-dark rounded-pill me-1">{{ _filteredProspects.length }}</span>
+                }
+                @let _createBlocker = createProspectBlocker();
+                <i class="cursor-pointer" [class.text-primary]="!_createBlocker" [class.text-muted]="_createBlocker" role="button" tabindex="0" [attr.aria-disabled]="!!_createBlocker" [ngbTooltip]="_createBlocker" (keydown.enter)="createNewProspect()" (click)="createNewProspect()">add</i>
+            </div>
+
+            <div class="px-2 py-2 border-bottom d-flex flex-wrap gap-1">
+                @for (filter of _statusFilters; track filter.key) {
+                    <span class="status-filter-btn d-flex align-items-center gap-1 cursor-pointer px-2 py-1 text-black" [class]="filter.badgeClass" [class.opacity-25]="!filter.selected" [ngbTooltip]="filter.label" tabindex="0" (click)="toggleStatusFilter(filter.key)" (keyup.enter)="toggleStatusFilter(filter.key)">
+                        <i class="status-filter-icon">{{ filter.icon }}</i>
+                        @if (_statusCounts[filter.key] > 0) {
+                            <span class="status-filter-count">{{ _statusCounts[filter.key] }}</span>
+                        }
+                    </span>
+                }
+            </div>
+
+            <input #fileInput type="file" accept=".csv" class="d-none" (change)="handleFileSelect($event)">
+
+            <div class="card-body p-0">
+                @if (_isLoading) {
+                    <spinner class="py-4"></spinner>
+                }
+
+                @if (!_isLoading && _prospects.length === 0) {
+                    <empty-state [card]="false" class="prospects" i18n-title="@@i18n.marketing.no_prospects_found" title="no prospects yet">
+                        <p class="text-muted small" i18n="@@i18n.marketing.add_prospects_hint">Add prospects manually or through the Firefox addon.</p>
+                    </empty-state>
+                }
+
+                @if (!_isLoading && _prospects.length > 0) {
+                    <ul class="list-group list-group-flush">
+                        @for (prospect of _filteredProspects; track prospect.id) {
+                            <li class="list-group-item" [class.router-active]="selectedProspectId() === prospect.id" [nx]="prospect" [tables]="_filteredProspects" (actionsResolved)="actionsResolved()" (click)="navigateToProspect($event, prospect)" (keydown.enter)="navigateToProspect($event, prospect)" tabindex="0">
+                                <div class="hstack gap-2">
+                                    <i [class]="'status-icon flex-shrink-0 ' + prospect.statusTextClass()">{{ prospect.statusIcon() }}</i>
+                                    <div class="prospect-info">
+                                        <div class="text-truncate" [class.text-muted]="['unresponsive', 'disqualified', 'on_hold'].includes(prospect.status)">
+                                            @if (prospect.company_contact) {
+                                                {{ prospect.company_contact.contact.getName() }}
+                                            } @else {
+                                                {{ prospect.getName() }}
+                                            }
+                                        </div>
+                                        @if (!prospect.company_contact && prospect.company()) {
+                                            <div class="text-truncate text-muted small">{{ prospect.company() }}</div>
+                                        }
+                                    </div>
+                                    @if (prospect.company_contact?.company) {
+                                        <div class="flex-shrink-0" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()" tabindex="0">
+                                            <avatar [object]="prospect.company_contact!.company!"></avatar>
+                                        </div>
+                                    }
+                                    @if (prospect.has_overdue_activities && !['unresponsive', 'disqualified', 'on_hold'].includes(prospect.status)) {
+                                        <span class="status status-red flex-shrink-0 ms-auto"></span>
+                                    }
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+
+            <div class="card-footer d-flex gap-2 justify-content-end py-2">
+                <button class="btn btn-sm btn-plain text-primary d-flex align-items-center gap-1" (click)="openImportFile()" i18n-ngbTooltip="@@i18n.marketing.importCsvTooltip" ngbTooltip="Import prospects from CSV file">
+                    <i style="font-size: 1rem">upload</i>
+                    <span>Import</span>
+                </button>
+                <button class="btn btn-sm btn-plain text-primary d-flex align-items-center gap-1" (click)="exportCsv()" [disabled]="filteredProspects().length === 0" i18n-ngbTooltip="@@i18n.marketing.exportCsvTooltip" ngbTooltip="Export filtered prospects as CSV">
+                    <i style="font-size: 1rem">download</i>
+                    <span>Export</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-9">
+        <router-outlet></router-outlet>
+    </div>
+</div>

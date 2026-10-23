@@ -1,0 +1,95 @@
+@let _projects = projects();
+@let _defaultProduct = defaultProduct();
+
+<toolbar>
+    <button class="btn btn-primary" (click)="openAddModal()">
+        <i>add</i>
+        <span>add audit pipeline</span>
+    </button>
+</toolbar>
+
+@if (loading()) {
+    <spinner class="mt-5"></spinner>
+} @else {
+    <div class="row">
+        <div class="col-12 col-md-3">
+            <div class="card">
+                <div class="card-header">settings</div>
+                <div class="card-body">
+                    <div class="form-label text-muted small">default product for new invoice items</div>
+                    @if (_defaultProduct) {
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="text-white flex-fill">{{ _defaultProduct.name }}</span>
+                            <button class="btn btn-sm btn-plain text-primary p-0" (click)="clearDefaultProduct()" [disabled]="savingProduct()">
+                                <i>close</i>
+                            </button>
+                        </div>
+                    } @else {
+                        <search-input only="Product" (itemSelected)="selectDefaultProduct($event)"></search-input>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-9">
+            @if (!_projects.length) {
+                <empty-state [card]="true" class="audit" title="no audit pipelines configured"></empty-state>
+            } @else {
+                @for (project of _projects; track project.id) {
+                    <div class="card mb-3">
+                        <div class="card-header d-flex align-items-center gap-2" [nx]="project" context="audit">
+                            @if (project.company) {
+                                <avatar [object]="project.company"></avatar>
+                            } @else {
+                                <n>git</n>
+                            }
+                            <span class="fw-semibold">{{ project.project_name }}</span>
+                            <small class="text-muted">{{ project.namespace_with_path }}</small>
+                            @if (project.invoice_item) {
+                                <span class="badge bg-secondary"> <i class="me-1" style="font-size: 0.7rem">receipt_long</i>{{ project.invoice_item.name }} </span>
+                            }
+                            @if (project.linked_projects.length) {
+                                <div class="ms-auto d-flex align-items-center gap-1">
+                                    @for (p of project.linked_projects; track p.id) {
+                                        <a [routerLink]="['/projects', p.id]" [ngbTooltip]="p.name">
+                                            <n class="{{ p.has_chat ? 'text-success' : 'text-grey' }}">project</n>
+                                        </a>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        @if (!project.cron) {
+                            <div class="card-body text-warning small"><i>warning</i> no audit schedule configured – add the pipeline again to pick environment, jobs and interval</div>
+                        } @else {
+                            <div class="card-body d-flex align-items-center gap-3 flex-wrap">
+                                <i class="text-{{ project.last_status === 'retried' ? 'success' : project.last_status ? 'warning' : 'muted' }}">schedule</i>
+                                <div class="flex-fill">
+                                    <div class="d-flex align-items-center gap-1 flex-wrap">
+                                        @for (job of project.jobs; track job) {
+                                            <span class="badge bg-secondary">{{ job }}</span>
+                                        }
+                                    </div>
+                                    <small class="text-muted">
+                                        latest {{ project.environment }} deployment ·
+                                        @if (project.last_run_at) {
+                                            {{ project.last_run_at | date: 'short' }} –
+                                        }
+                                        {{ statusLabel(project.last_status) }}
+                                        @if (project.lastPipelineUrl(); as url) {
+                                            · <a [href]="url" target="_blank" rel="noopener">pipeline #{{ project.last_pipeline_id }}</a>
+                                        }
+                                    </small>
+                                </div>
+                                @if (project.var.running) {
+                                    <spinner [size]="20" [inline]="true"></spinner>
+                                }
+                                <span class="badge bg-secondary">{{ cronLabel(project.cron) }}</span>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}

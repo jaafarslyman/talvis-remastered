@@ -1,0 +1,97 @@
+export {}; // this will make it module
+
+declare global {
+    interface Array<T> {
+        first(): T | undefined;
+        last(): T | undefined;
+        remove(_: T): T;
+        flattened(): T;
+        sum(): number;
+        groupBy(cmp: (object: T) => string | number): T[][];
+        unique(): T[];
+        contains(_: T): boolean;
+    }
+    interface String {
+        capitalize(): string;
+        escape(): string;
+        formatPlaceholders(): string;
+    }
+    interface Promise<T> {
+        confirmed<TResult1 = T, TResult2 = never>(onfulfilled: (value: NonNullable<T>) => TResult1): Promise<void | TResult1 | TResult2>;
+    }
+    interface ActivatedRouteSnapshot {
+        toPath(): string;
+    }
+}
+
+Array.prototype.last = function () {
+    return this.length ? this[this.length - 1] : undefined;
+};
+Array.prototype.first = function () {
+    return this.length ? this[0] : undefined;
+};
+Array.prototype.remove = function <T>(_: T) {
+    this.splice(this.indexOf(_), 1);
+    return this;
+};
+Array.prototype.sum = function () {
+    let i = 0;
+    this.forEach((_) => (i += _));
+    return i;
+};
+Array.prototype.contains = function <T>(_: T) {
+    return this.findIndex((x) => x === _) !== -1;
+};
+Array.prototype.flattened = function () {
+    const ret: unknown[] = [];
+    for (const _ of this) {
+        ret.push(..._);
+    }
+    return ret;
+};
+Array.prototype.unique = function <T>(this: T[]) {
+    return this.filter((value, index, array) => array.indexOf(value) === index);
+};
+/**
+ * Sorts an array of objects into a two-dimensional array, where the first level is divided by the cmp return
+ * Input: array = [{foo: 1}, {foo: 1}, {foo: 1}, {foo: 1}, {foo: 2}, {foo: 2}]
+ * array2 = array.pivotSort(_ => _.foo)
+ * Returns: [[{foo: 1}, {foo: 1}, {foo: 1}, {foo: 1}], [{foo: 2}, {foo: 2}]]
+ */
+Array.prototype.groupBy = function <T>(this: T[], cmp: (object: T) => string | number) {
+    const m: Record<string | number, T[]> = {};
+    for (const o of this) {
+        const key = cmp(o);
+        if (!(key in m)) m[key] = [];
+        m[key].push(o);
+    }
+    return Object.values(m);
+};
+export const toKeyValue = (_: object) =>
+    Object.keys(_)
+        .map((k) => ({ key: k, value: (_ as Record<string, unknown>)[k] }))
+        .filter((x) => !Array.isArray(x.value));
+export const toXY = (_: object) =>
+    Object.keys(_)
+        .map((k) => ({ x: k, y: (_ as Record<string, unknown>)[k] }))
+        .filter((x) => !Array.isArray(x.y));
+
+// `Promise.prototype` is typed `Promise<any>`, so an implementation cannot restate the
+// declaration's generics without becoming unassignable to it.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+Promise.prototype.confirmed = function (onfulfilled: (value: any) => unknown) {
+    return this.then((result) => {
+        if (result) {
+            onfulfilled(result);
+        }
+    }).catch();
+};
+String.prototype.capitalize = function () {
+    return this.charAt(0).toUpperCase() + this.slice(1);
+};
+String.prototype.escape = function () {
+    return this.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+String.prototype.formatPlaceholders = function () {
+    return this.replace(/(\[.*?\])/g, '<code>$1</code>');
+};

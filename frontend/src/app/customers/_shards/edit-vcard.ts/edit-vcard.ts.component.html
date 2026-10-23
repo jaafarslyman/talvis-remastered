@@ -1,0 +1,10 @@
+@let _card = card();
+@if (_card) {
+    <div class="text-muted small text-uppercase fw-semibold mb-1 ms-1" i18n="@@i18n.contacts.personalDetails">personal details</div>
+    <app-vcard [object]="_card.contact" type="home"></app-vcard>
+
+    <div class="text-muted small text-uppercase fw-semibold mb-1 ms-1">
+        <span i18n="@@i18n.contacts.employmentAt">employment at</span> {{ company().getName() }}
+    </div>
+    <app-vcard [object]="_card"></app-vcard>
+}

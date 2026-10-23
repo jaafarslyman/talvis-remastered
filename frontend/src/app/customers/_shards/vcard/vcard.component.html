@@ -1,0 +1,397 @@
+@let obj = object();
+@let _type = type();
+@let _isUser = isUser();
+@let _isCompany = isCompany();
+@let _isContact = isContact();
+@let _isCompanyContact = isCompanyContact();
+@let _isProspect = isProspect();
+@let _showNameDetails = showNameDetails();
+
+@if (obj) {
+    <div class="card mb-3">
+        <div class="card-header hstack gap-2 align-items-center" [class.p-0]="_isCompany">
+            @if (_isCompany) {
+                <div class="ps-3 flex-fill">
+                    <input (blur)="updateVcard()" (click)="useName($event)" tabindex="0" (keydown.enter)="useName($event)" type="text" class="form-control-header" [ngModel]="org()" (keyup)="onOrgChange($event)" id="companyName" placeholder="company name" i18n-placeholder="@@i18n.customers.company_name" />
+                </div>
+            }
+
+            @if (_isUser) {
+                <ng-container *ngTemplateOutlet="title; context: { object: obj, icon: 'person' }"></ng-container>
+            }
+
+            @if (_isContact) {
+                <ng-container *ngTemplateOutlet="title; context: { object: obj, icon: 'person' }"></ng-container>
+            }
+
+            @if (_isCompanyContact) {
+                <ng-container *ngTemplateOutlet="title; context: { object: obj, icon: 'work' }"></ng-container>
+            }
+
+            <div class="card-header-actions d-flex ps-3">
+                <div ngbDropdown>
+                    <button class="btn btn-plain dropdown-toggle-simple p-0" [class.m-3]="_isCompany" type="button" ngbDropdownToggle aria-expanded="false">
+                        <i class="text-primary">add</i>
+                    </button>
+
+                    <ul class="dropdown-menu autoposition" ngbDropdownMenu>
+                        <li>
+                            @if (_isContact || _isUser || _isProspect) {
+                                <a class="dropdown-item capitalize" (click)="addRow('N:;;;;')" (keyup.enter)="addRow('N:;;;;')" tabindex="0" i18n="@@i18n.common.name">name</a>
+                            }
+                        </li>
+                        <li>
+                            @if (_isCompanyContact || _isUser || _isContact) {
+                                <a class="dropdown-item capitalize" (click)="addRow('TITLE:')" (keyup.enter)="addRow('TITLE:')" tabindex="0" i18n="@@i18n.common.position">position</a>
+                            }
+                        </li>
+                        <li><a class="dropdown-item capitalize" (click)="addRow('TEL;type=' + _type + ',VOICE:')" (keyup.enter)="addRow('TEL;type=' + _type + ',VOICE:')" tabindex="0" i18n="@@i18n.common.telephone">telephone</a></li>
+                        <li><a class="dropdown-item capitalize" (click)="addRow('TEL;type=' + _type + ',CELL:')" (keyup.enter)="addRow('TEL;type=' + _type + ',CELL:')" tabindex="0" i18n="@@i18n.common.mobile">mobile</a></li>
+                        <li><a class="dropdown-item capitalize" (click)="addRow('TEL;type=' + _type + ',FAX:')" (keyup.enter)="addRow('TEL;type=' + _type + ',FAX:')" tabindex="0" i18n="@@i18n.common.fax">fax</a></li>
+                        <li><a class="dropdown-item capitalize" (click)="addRow('EMAIL;type=' + _type + ':')" (keyup.enter)="addRow('EMAIL;type=' + _type + ':')" tabindex="0" i18n="@@i18n.common.email">email</a></li>
+                        <li><a class="dropdown-item capitalize" (click)="addRow('ADR:;;;;;;')" (keyup.enter)="addRow('ADR:;;;;;;')" tabindex="0" i18n="@@i18n.common.address">address</a></li>
+                        <li>
+                            @if (_isContact || _isUser) {
+                                <a class="dropdown-item capitalize" (click)="addRow('BDAY:1982-01-01')" tabindex="0" (keydown.enter)="addRow('BDAY:1982-01-01')" i18n="@@i18n.common.birthday">birthday</a>
+                            }
+                        </li>
+                        <li>
+                            @if (_isCompany || _isContact || _isProspect) {
+                                <a class="dropdown-item capitalize" (click)="addRow('URL;type=' + _type + ':')" (keyup.enter)="addRow('URL;type=' + _type + ':')" tabindex="0" i18n="@@i18n.common.url">URL</a>
+                            }
+                        </li>
+                        <li>
+                            @if (_isContact || _isUser || _isProspect) {
+                                <a class="dropdown-item capitalize" (click)="addRow('URL;type=linkedin:')" tabindex="0" (keydown.enter)="addRow('URL;type=linkedin:')" i18n="@@i18n.common.socialMedia">social media</a>
+                            }
+                        </li>
+                        <li>
+                            @if (_isContact || _isProspect) {
+                                <a class="dropdown-item capitalize" (click)="addRow('ORG:')" (keyup.enter)="addRow('ORG:')" tabindex="0" i18n="@@i18n.common.company">company</a>
+                            }
+                        </li>
+                        <li>
+                            @if (_isUser) {
+                                <a class="dropdown-item capitalize" (click)="addEmergencyContact()" tabindex="0" (keydown.enter)="addEmergencyContact()" i18n="@@i18n.common.emergencyContact">emergency contact</a>
+                            }
+                        </li>
+                        <li>
+                            @if ((_isCompany || _isContact) && !hasLanguageFormality()) {
+                                <a class="dropdown-item capitalize" (click)="addLanguageFormality()" tabindex="0" (keydown.enter)="addLanguageFormality()" i18n="@@i18n.common.languageFormality">language & formality</a>
+                            }
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        @if (obj.card(); as card) {
+            <ul class="list-group list-group-dark">
+                @if (_isContact || _isUser || _isProspect) {
+                    <li [nx]="card.get('FN').first()!" (singleActionResolved)="singleActionResolved($event)" [class]="liClass">
+                        <div class="mb-1">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i ngbTooltip="name" i18n-ngbTooltip="@@i18n.common.name">badge</i>
+                                </span>
+                                <input (blur)="updateVcard()" (keyup)="onFnChange($event)" type="text" class="form-control" id="floatingInput" placeholder="name" [(ngModel)]="card.get('FN').first()!.vals[0]" i18n-placeholder="@@i18n.common.name" />
+                                <div class="cursor-pointer" (click)="showNameDetails.set(!_showNameDetails)" (keyup.enter)="showNameDetails.set(!_showNameDetails)" tabindex="0">
+                                    <i class="p-2 pointer text-primary">{{ _showNameDetails ? 'expand_less' : 'expand_more' }}</i>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+
+                    @if (_showNameDetails) {
+                        <li [nx]="card.get('N').first()!" (singleActionResolved)="singleActionResolved($event)" [class]="liClass">
+                            @for (val of card.get('N').first()!.vals; track j; let j = $index) {
+                                <div class="mb-1">
+                                    <div class="input-group">
+                                        <label for="floatingInput" class="input-group-text col-4">{{ obj.descN(j) }}</label>
+                                        <input (blur)="updateVcard()" (keyup)="onNChange(card.get('N').first()!)" type="text" class="form-control" id="floatingInput" placeholder="name" [(ngModel)]="card.get('N').first()!.vals[j]" i18n-placeholder="@@i18n.common.name" />
+                                    </div>
+                                </div>
+                            }
+                        </li>
+                    }
+                }
+
+                @for (row of card.rows; track row.track_id; let i = $index) {
+                    @let _rowType = row.getType();
+
+                    @switch (row.key) {
+                        @case ('ADR') {
+                            <li class="d-flex" [nx]="row" (singleActionResolved)="singleActionResolved($event)" [class]="liClass" [class.accent-danger]="needsWarning(row)" [attr.title]="needsWarning(row) || null">
+                                <div class="flex-fill me-3" (focusout)="onAdrFocusOut($event, row)">
+                                    <div class="form-floating mb-2">
+                                        <input autocomplete="off" type="text" class="form-control" id="adr-{{ row.track_id }}-1" placeholder="{{ obj.descAdr(1) }}" [(ngModel)]="row.vals[1]" />
+                                        <label for="adr-{{ row.track_id }}-1">{{ obj.descAdr(1) }}</label>
+                                    </div>
+                                    <div class="form-floating mb-2">
+                                        <input autocomplete="off" type="text" class="form-control" id="adr-{{ row.track_id }}-2" placeholder="{{ obj.descAdr(2) }}" [(ngModel)]="row.vals[2]" />
+                                        <label for="adr-{{ row.track_id }}-2">{{ obj.descAdr(2) }}</label>
+                                    </div>
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-auto" style="width: 150px">
+                                            <div class="form-floating">
+                                                <input autocomplete="off" type="text" class="form-control" id="adr-{{ row.track_id }}-5" placeholder="{{ obj.descAdr(5) }}" [(ngModel)]="row.vals[5]" (keyup)="onPlzUpdate(row)" />
+                                                <label for="adr-{{ row.track_id }}-5">{{ obj.descAdr(5) }}</label>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="form-floating">
+                                                <input autocomplete="off" type="text" class="form-control" id="adr-{{ row.track_id }}-3" placeholder="{{ obj.descAdr(3) }}" [(ngModel)]="row.vals[3]" />
+                                                <label for="adr-{{ row.track_id }}-3">{{ obj.descAdr(3) }}</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-floating mb-2">
+                                        <input autocomplete="off" type="text" class="form-control" id="adr-{{ row.track_id }}-4" placeholder="{{ obj.descAdr(4) }}" [(ngModel)]="row.vals[4]" />
+                                        <label for="adr-{{ row.track_id }}-4">{{ obj.descAdr(4) }}</label>
+                                    </div>
+                                    <div class="form-floating">
+                                        <select class="form-select" id="adr-{{ row.track_id }}-6" [(ngModel)]="row.vals[6]">
+                                            @for (c of db_countries; track c) {
+                                                <option [ngValue]="c.alpha2">{{ c.name }}</option>
+                                            }
+                                        </select>
+                                        <label for="adr-{{ row.track_id }}-6">{{ obj.descAdr(6) }}</label>
+                                    </div>
+                                </div>
+                                @if (hasGeoForAddress(i); as geoRow) {
+                                    <div class="flex-shrink-0" style="width: 200px">
+                                        <div #mapContainer class="map-container h-100" style="width: 100%" [attr.data-map-id]="'map-' + i" [attr.data-lat]="geoRow.vals[0]" [attr.data-lon]="geoRow.vals[1]"></div>
+                                    </div>
+                                }
+                            </li>
+                        }
+
+                        @case ('N') {}
+                        @case ('FN') {}
+                        @case ('GEO') {}
+
+                        @case ('URL') {
+                            <li [nx]="row" (singleActionResolved)="singleActionResolved($event)" [class]="liClass" [attr.title]="needsWarning(row) || null">
+                                <div class="input-group">
+                                    @if (row.isSocialMedia()) {
+                                        <span class="input-group-text">
+                                            <div ngbDropdown>
+                                                <button class="btn btn-dark dropdown-toggle" type="button" ngbDropdownToggle>
+                                                    @if (smSrcForKey(_rowType)) {
+                                                        <img [src]="smSrcForKey(_rowType)" class="avatar avatar-sm avatar-img" alt="" />
+                                                    }
+                                                    {{ _rowType }}
+                                                </button>
+                                                <div class="dropdown-menu" ngbDropdownMenu>
+                                                    @for (type of smtypekeys; track type) {
+                                                        <button class="dropdown-item hstack gap-2" (click)="row.setType(type); updateVcard()" tabindex="0" (keydown.enter)="row.setType(type); updateVcard()">
+                                                            <img [src]="smtypes[type]" class="avatar avatar-sm avatar-img" alt="" />
+                                                            {{ type }}
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </span>
+                                    }
+                                    @if (!row.isSocialMedia()) {
+                                        <span class="input-group-text">
+                                            <i ngbTooltip="URL" i18n-ngbTooltip="@@i18n.common.url">link</i>
+                                        </span>
+                                    }
+
+                                    @for (val of row.vals; track j; let j = $index) {
+                                        <input (blur)="updateVcard()" type="text" class="form-control" placeholder="{{ row.key }}" [attr.aria-label]="row.key" [(ngModel)]="row.vals[j]" />
+                                    }
+
+                                    @if (!row.isSocialMedia()) {
+                                        <span class="input-group-text">
+                                            <button class="btn btn-plain text-primary" (click)="importImprint()" tabindex="0" (keydown.enter)="importImprint()" [disabled]="isImportingImprint()" ngbTooltip="import from imprint" i18n-ngbTooltip="@@i18n.company.import_from_imprint">
+                                                @if (isImportingImprint()) {
+                                                    <spinner [size]="20"></spinner>
+                                                } @else {
+                                                    <i>find_in_page</i>
+                                                }
+                                            </button>
+                                        </span>
+                                    }
+                                </div>
+                            </li>
+                        }
+
+                        @case ('EMAIL') {
+                            <ng-template #emailHeader>
+                                <span class="input-group-text">
+                                    <i ngbTooltip="email" i18n-ngbTooltip="@@i18n.common.email">mail</i>
+                                </span>
+                            </ng-template>
+                            <ng-container *ngTemplateOutlet="fieldRow; context: { row: row, header: emailHeader, dClass: false }"></ng-container>
+                        }
+                        @case ('TEL') {
+                            <ng-template #telHeader>
+                                <span class="input-group-text">
+                                    <i ngbTooltip="telephone" i18n-ngbTooltip="@@i18n.common.telephone">call</i>
+                                </span>
+                                <ng-container *ngTemplateOutlet="telTypeDropdown; context: { row: row }"></ng-container>
+                            </ng-template>
+                            <ng-container *ngTemplateOutlet="fieldRow; context: { row: row, header: telHeader, dClass: isEmergencyTelForRelated(row) }"></ng-container>
+                        }
+                        @case ('RELATED') {
+                            <li [nx]="row" (singleActionResolved)="singleActionResolved($event)" [class]="liClass" [class.accent-danger]="needsWarning(row)" [attr.title]="needsWarning(row) || null">
+                                @if (getEmergencyTelForRelated(i); as telRow) {
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i ngbTooltip="emergency contact" i18n-ngbTooltip="@@i18n.common.emergencyContact" style="color: cyan">contact_emergency</i>
+                                        </span>
+                                        <input (blur)="updateVcard()" type="text" class="form-control" placeholder="name" i18n-placeholder="@@i18n.common.name" [(ngModel)]="row.vals[0]" />
+                                        <ng-container *ngTemplateOutlet="telTypeDropdown; context: { row: telRow }"></ng-container>
+                                        <input (blur)="updateVcard()" type="text" class="form-control" placeholder="telephone" i18n-placeholder="@@i18n.common.telephone" [(ngModel)]="telRow.vals[0]" />
+                                    </div>
+                                }
+                            </li>
+                        }
+                        @case ('BDAY') {
+                            <ng-template #bdayHeader>
+                                <span class="input-group-text">
+                                    <i ngbTooltip="birthday" i18n-ngbTooltip="@@i18n.common.birthday">cake</i>
+                                </span>
+                            </ng-template>
+                            <ng-container *ngTemplateOutlet="fieldRow; context: { row: row, header: bdayHeader, dClass: false }"></ng-container>
+                        }
+                        @case ('X-LANG') {
+                            <li [class]="liClass">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i ngbTooltip="language" i18n-ngbTooltip="@@i18n.common.language">language</i>
+                                    </span>
+                                    <select class="form-select" [ngModel]="obj.getLang()" (ngModelChange)="obj.setLang($event); updateVcard()">
+                                        <option value="de" i18n="@@i18n.common.deutsch">deutsch</option>
+                                        <option value="en" i18n="@@i18n.common.english">english</option>
+                                        <option value="fr" i18n="@@i18n.common.français">français</option>
+                                        <option value="es" i18n="@@i18n.common.español">español</option>
+                                    </select>
+                                </div>
+                            </li>
+                        }
+                        @case ('X-FORMALITY') {
+                            <li [class]="liClass">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i ngbTooltip="formality" i18n-ngbTooltip="@@i18n.common.formality">perm_identity</i>
+                                    </span>
+                                    <select class="form-select" [ngModel]="obj.getFormality()" (ngModelChange)="obj.setFormality($event); updateVcard()">
+                                        <option value="formal" i18n="@@i18n.common.formal">formal</option>
+                                        <option value="informal" i18n="@@i18n.common.informal">informal</option>
+                                    </select>
+                                </div>
+                            </li>
+                        }
+                        @case ('TITLE') {
+                            <ng-template #titleFieldHeader>
+                                <span class="input-group-text">
+                                    <i ngbTooltip="position" i18n-ngbTooltip="@@i18n.common.position">school</i>
+                                </span>
+                            </ng-template>
+                            <ng-container *ngTemplateOutlet="fieldRow; context: { row: row, header: titleFieldHeader, dClass: false }"></ng-container>
+                        }
+                        @case ('ORG') {
+                            <ng-template #orgHeader>
+                                <span class="input-group-text">
+                                    <i ngbTooltip="organization" i18n-ngbTooltip="@@i18n.common.organization">domain</i>
+                                </span>
+                            </ng-template>
+                            <ng-container *ngTemplateOutlet="fieldRow; context: { row: row, header: orgHeader, dClass: _isCompany }"></ng-container>
+                        }
+                        @case ('X-NEXUS-GIT') {
+                            <ng-template #gitHeader>
+                                <span class="input-group-text col-desc">
+                                    <n class="text-blue" ngbTooltip="git" i18n-ngbTooltip="@@i18n.common.git">git</n>
+                                </span>
+                            </ng-template>
+                            <ng-container *ngTemplateOutlet="fieldRow; context: { row: row, header: gitHeader, dClass: _isCompany }"></ng-container>
+                        }
+                        @case ('X-NEXUS-MANTISBT') {
+                            <ng-template #mantisHeader>
+                                <span class="input-group-text col-desc">
+                                    <n class="text-blue" ngbTooltip="mantis" i18n-ngbTooltip="@@i18n.common.mantis">mantis</n>
+                                </span>
+                            </ng-template>
+                            <ng-container *ngTemplateOutlet="fieldRow; context: { row: row, header: mantisHeader, dClass: _isCompany }"></ng-container>
+                        }
+                        @case ('X-NEXUS-JIRA') {
+                            <ng-template #jiraHeader>
+                                <span class="input-group-text col-desc">
+                                    <n class="text-blue" ngbTooltip="jira" i18n-ngbTooltip="@@i18n.common.jira">jira</n>
+                                </span>
+                            </ng-template>
+                            <ng-container *ngTemplateOutlet="fieldRow; context: { row: row, header: jiraHeader, dClass: _isCompany }"></ng-container>
+                        }
+                        @case ('X-NEXUS-GITHUB') {
+                            <ng-template #githubHeader>
+                                <span class="input-group-text col-desc">
+                                    <n class="text-blue" ngbTooltip="github" i18n-ngbTooltip="@@i18n.common.github">github</n>
+                                </span>
+                            </ng-template>
+                            <ng-container *ngTemplateOutlet="fieldRow; context: { row: row, header: githubHeader, dClass: _isCompany }"></ng-container>
+                        }
+                        @case ('X-NEXUS-MATTERMOST') {
+                            <ng-template #mattermostHeader>
+                                <span class="input-group-text col-desc">
+                                    <n class="text-blue" ngbTooltip="mattermost" i18n-ngbTooltip="@@i18n.common.mattermost">mattermost</n>
+                                </span>
+                            </ng-template>
+                            <ng-container *ngTemplateOutlet="fieldRow; context: { row: row, header: mattermostHeader, dClass: _isCompany }"></ng-container>
+                        }
+                        @case ('X-NEXUS-SLACK') {
+                            <ng-template #slackHeader>
+                                <span class="input-group-text col-desc">
+                                    <n class="text-blue" ngbTooltip="slack" i18n-ngbTooltip="@@i18n.common.slack">slack</n>
+                                </span>
+                            </ng-template>
+                            <ng-container *ngTemplateOutlet="fieldRow; context: { row: row, header: slackHeader, dClass: _isCompany }"></ng-container>
+                        }
+                        @default {
+                            <ng-template #defaultHeader>
+                                <span class="input-group-text col-desc">{{ row.key }}</span>
+                            </ng-template>
+                            <ng-container *ngTemplateOutlet="fieldRow; context: { row: row, header: defaultHeader, dClass: _isCompany && row.key === 'ORG' }"></ng-container>
+                        }
+                    }
+                }
+            </ul>
+        }
+    </div>
+}
+
+<ng-template #fieldRow let-row="row" let-header="header" let-dClass="dClass">
+    <li [nx]="row" (singleActionResolved)="singleActionResolved($event)" [class]="liClass" [class.accent-danger]="needsWarning(row)" [attr.title]="needsWarning(row) || null" [class.d-none]="dClass">
+        <div class="input-group">
+            <ng-container *ngTemplateOutlet="header"></ng-container>
+            @for (val of row.vals; track j; let j = $index) {
+                <input (blur)="updateVcard()" type="text" class="form-control" placeholder="{{ row.key }}" [attr.aria-label]="row.key" [(ngModel)]="row.vals[j]" />
+            }
+        </div>
+    </li>
+</ng-template>
+
+<ng-template #title let-object="object" let-icon="icon">
+    <i>{{ icon }}</i>
+    <span class="text-muted small">{{ object.honoraryPrefix() }}</span>
+    {{ object.getName() }}
+    <span class="text-muted small">{{ object.honorarySuffix() }}</span>
+</ng-template>
+
+<ng-template #telTypeDropdown let-row="row">
+    <span class="input-group-text">
+        <div ngbDropdown placement="bottom-end">
+            <span class="badge text-bg-secondary dropdown-toggle pointer" ngbDropdownToggle>
+                {{ getTelType(row) }}
+            </span>
+            <div class="dropdown-menu" ngbDropdownMenu>
+                <button class="dropdown-item" (click)="setTelType(row, 'VOICE'); updateVcard()" tabindex="0" (keydown.enter)="setTelType(row, 'VOICE'); updateVcard()" i18n="@@i18n.common.voice">voice</button>
+                <button class="dropdown-item" (click)="setTelType(row, 'CELL'); updateVcard()" tabindex="0" (keydown.enter)="setTelType(row, 'CELL'); updateVcard()" i18n="@@i18n.common.mobile">mobile</button>
+                <button class="dropdown-item" (click)="setTelType(row, 'FAX'); updateVcard()" tabindex="0" (keydown.enter)="setTelType(row, 'FAX'); updateVcard()" i18n="@@i18n.common.fax">fax</button>
+                <button class="dropdown-item" (click)="setTelType(row, 'WORK'); updateVcard()" tabindex="0" (keydown.enter)="setTelType(row, 'WORK'); updateVcard()" i18n="@@i18n.common.work">work</button>
+                <button class="dropdown-item" (click)="setTelType(row, 'HOME'); updateVcard()" tabindex="0" (keydown.enter)="setTelType(row, 'HOME'); updateVcard()" i18n="@@i18n.common.home">home</button>
+            </div>
+        </div>
+    </span>
+</ng-template>

@@ -1,0 +1,26 @@
+<nx-contextmenu></nx-contextmenu>
+
+@if (loading()) {
+    <div class="route-loading" role="status" aria-live="polite">
+        <spinner [size]="64" [logo]="true" />
+        <span class="visually-hidden" i18n="@@i18n.common.loading">loading</span>
+    </div>
+}
+
+<div class="app-scroll">
+    <div class="container-app">
+        @if (authResolved()) {
+            <router-outlet></router-outlet>
+        }
+    </div>
+</div>
+
+<app-navigation></app-navigation>
+<app-activity></app-activity>
+
+<app-toasts aria-live="polite" aria-atomic="true"></app-toasts>
+<activity-tab-attention></activity-tab-attention>
+<activity-tab-copypaste></activity-tab-copypaste>
+<activity-tab-tasks></activity-tab-tasks>
+<activity-tab-invoicing></activity-tab-invoicing>
+<activity-tab-widgets></activity-tab-widgets>

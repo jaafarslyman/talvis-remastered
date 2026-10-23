@@ -1,0 +1,48 @@
+<div class="card mb-3">
+    <div class="card-header" i18n="@@i18n.common.general">general</div>
+    <div class="card-body">
+        <input-settings-group id="PROJECT_CREATE_AUTO_BUDGET" i18n="@@i18n.settings.initialTimeBudgetForUserOnNewProjectCreation">initial time budget for user on new project creation</input-settings-group>
+        <input-settings-group id="NOTIFICATION_EMAIL_ON_FRAMEWORK_UPDATE" i18n="@@i18n.settings.frameworkUpdateEmail">email address for framework update notifications</input-settings-group>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header" i18n="@@i18n.project.warranty">warranty</div>
+    <div class="card-body">
+        <p class="text-muted small mb-3" i18n="@@i18n.project.warrantyDurationDesc">Time after a project is finished during which time can still be tracked on it. Available as the [warranty-duration] placeholder in quotes and invoices.</p>
+        <input-settings-group id="PROJECT_WARRANTY_DURATION" [suffix]="years" placeholder="1" i18n="@@i18n.project.warrantyDuration">warranty period</input-settings-group>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header" i18n="@@i18n.project.overrunPredicted">overrun predicted</div>
+    <div class="card-body">
+        <p class="text-muted small mb-3" i18n="@@i18n.settings.overrunWarnThresholdDesc">Show an orange warning badge on a project as soon as the predicted final effort reaches this share of the estimated work.</p>
+        <input-settings-group id="PROJECT_OVERRUN_WARN_THRESHOLD" suffix="%" placeholder="110" i18n="@@i18n.settings.overrunWarnThreshold">warning threshold</input-settings-group>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header" i18n="@@i18n.settings.emailThresholds">email thresholds</div>
+    <div class="card-body">
+        <p class="text-muted small mb-3" i18n="@@i18n.settings.emailThresholdsDesc">Send an email to the project manager when hours invested divided by estimated work exceeds a threshold. Notifications reset automatically if the ratio drops below the threshold again.</p>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            @for (threshold of thresholds(); track threshold) {
+                <span class="badge d-inline-flex align-items-center gap-1 fs-6 bg-dark">
+                    {{ threshold }}%
+                    <button type="button" class="btn-close btn-close-white ms-1" aria-label="remove" (click)="removeThreshold(threshold)" style="font-size: 0.6em"></button>
+                </span>
+            }
+            @if (thresholdsLoading()) {
+                <spinner [size]="20" [inline]="true"></spinner>
+            } @else if (!thresholds().length) {
+                <span class="text-muted small fst-italic" i18n="@@i18n.settings.noThresholds">no thresholds configured</span>
+            }
+        </div>
+        <div class="input-group" style="max-width: 260px">
+            <input type="number" class="form-control" [ngModel]="newThreshold()" (ngModelChange)="newThreshold.set($event)" placeholder="80" min="1" max="9999" (keydown.enter)="addThreshold()" />
+            <span class="input-group-text">%</span>
+            <button class="btn btn-outline-primary" type="button" (click)="addThreshold()" i18n="@@i18n.common.add">add</button>
+        </div>
+    </div>
+</div>

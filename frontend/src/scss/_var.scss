@@ -1,0 +1,43 @@
+@use 'sass:color';
+
+$grid-width    : 1.5rem;
+$border-radius : 5px;
+$ratio-modules : 2;                                         // internal: golden cut ratio
+$ratio-views   : $ratio-modules * 1.618 * 1.618 * 1.618;    // internal: golden cut ratio
+$ratio-activity: $ratio-views * 1.618;                      // internal: golden cut ratio
+$m-modules     : $grid-width * $ratio-modules;       // width of module bar on the left
+$m-activity    : $grid-width * $ratio-activity;      // width of activity tab on the right
+$m-activity-rail: 2.5rem;
+$container-app : 1320px;                             // widest the shell content column ever grows
+$mobile-burger-size      : 60px;
+$mobile-burger-offset    : 20px;
+$mobile-burger-clearance : $mobile-burger-size + 2 * $mobile-burger-offset;
+
+$header-nav-ratio        : .618;
+$header-logo-size        : 3 * $grid-width;
+$header-height           : 2 * $grid-width + $header-logo-size;           // height of header
+$header-py               : .25 * $grid-width;
+$header-total-text-height: $header-logo-size - (3 * $header-py);
+$header-font-size        : $header-nav-ratio * $header-total-text-height;
+$nav-font-size           : (1 - $header-nav-ratio) * $header-total-text-height;
+
+$shadow-light: #fff1;
+$shadow-dark : #0009;
+
+@function light-top($size: .125rem) { @return 0 (-$size) ($size) $shadow-light; }
+@function dark-top($size: .125rem) { @return 0 (-$size) ($size) $shadow-dark; }
+@function light-bottom($size: .125rem) { @return 0 ($size) ($size) $shadow-light; }
+@function dark-bottom($size: .125rem) { @return 0 ($size) ($size) $shadow-dark; }
+@function shadow($size: .125rem) { @return light-top($size), dark-bottom($size); }
+@function shadow-down($size, $blur) { @return (-$size) (-$size) $blur $shadow-dark, $size $size $blur $shadow-light; }
+
+@function liquid-glass() {
+    @return
+        inset 0 1px 0 0 #fff2,
+        inset 0 8px 16px -6px #fff1,
+        inset 0 -6px 12px -4px #0004;
+}
+
+@function gradient($color) {
+    @return linear-gradient(-30deg, color.adjust($color, $lightness: -2%) 0%, $color 50%, color.adjust($color, $lightness: -1%) 100%)
+}

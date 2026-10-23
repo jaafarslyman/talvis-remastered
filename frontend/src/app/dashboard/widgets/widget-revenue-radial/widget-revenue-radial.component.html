@@ -1,0 +1,13 @@
+<div class="card mb-3">
+    <div class="card-header">
+        <n>invoices</n>
+        <span class="flex-fill text-truncate" i18n="@@i18n.widget-revenue-monthlyRange">monthly revenue range</span>
+    </div>
+    <div class="card-body d-flex justify-content-center align-items-center overflow-visible" style="min-height: 300px">
+        @if (loading()) {
+            <spinner></spinner>
+        } @else {
+            <div #chart></div>
+        }
+    </div>
+</div>

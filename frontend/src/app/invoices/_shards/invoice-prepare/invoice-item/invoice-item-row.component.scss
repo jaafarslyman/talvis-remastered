@@ -1,0 +1,8 @@
+:host { 
+    //td:not(.header) { padding: 1px 5px;}
+    .header { 
+        //padding: 1rem 0;
+        color: #ffffff;
+        background-color: var(--tv-surface-darker);
+    }
+}

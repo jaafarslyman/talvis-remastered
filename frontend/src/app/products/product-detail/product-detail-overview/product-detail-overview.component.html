@@ -1,0 +1,144 @@
+@let _product = object();
+@let _item = item();
+@let _customers = customers();
+@let _totalRevenue = totalRevenue();
+@let _totalCustomers = totalCustomers();
+
+@if (_product) {
+    <div class="row">
+        <div class="col-12 col-xl-8">
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="capitalize-first" i18n="@@i18n.common.information">information</span>
+                    <div class="btn-group" ngbDropdown>
+                        <button type="button" class="btn btn-sm btn-plain text-primary dropdown-toggle" ngbDropdownToggle>
+                            {{ currentPriceSourceText() }}
+                        </button>
+                        <div class="dropdown-menu" ngbDropdownMenu>
+                            <button type="button" class="dropdown-item" (click)="setTimeBased(0)" i18n="@@i18n.common.individualInvoiceItem">individual invoice item</button>
+                            <button type="button" class="dropdown-item" (click)="setTimeBased(1)" i18n="@@i18n.common.hourly">hourly</button>
+                            <button type="button" class="dropdown-item" (click)="setTimeBased(8)" i18n="@@i18n.common.daily">daily</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2 hstack gap-2">
+                        <span class="col-12 col-md-6 col-xl-3 text-truncate" id="name" i18n="@@i18n.common.name">name</span>
+                        <input type="text" class="form-control" [autosave]="_product" [(ngModel)]="_product.name" />
+                    </div>
+                    @if (_item && _product.time_based === 0) {
+                        <div>
+                            <div class="mb-2 hstack gap-2">
+                                <span class="text-truncate col-12 col-md-6 col-xl-3" i18n="@@i18n.common.recurrence">recurrence</span>
+                                <div ngbDropdown>
+                                    <span class="dropdown-toggle cursor-pointer" [class]="_item.getRepeatColor()" ngbDropdownToggle>
+                                        {{ _item.type === 0 ? 'none' : _item.getRepeatString() }}
+                                    </span>
+                                    <div ngbDropdownMenu>
+                                        <button ngbDropdownItem (click)="setItemType(0)" i18n="@@i18n.common.none">none</button>
+                                        <button ngbDropdownItem class="text-pink" (click)="setItemType(30)" i18n="@@i18n.common.daily">daily</button>
+                                        <button ngbDropdownItem class="text-purple" (click)="setItemType(31)" i18n="@@i18n.common.weekly">weekly</button>
+                                        <button ngbDropdownItem class="text-indigo" (click)="setItemType(32)" i18n="@@i18n.common.monthly">monthly</button>
+                                        <button ngbDropdownItem class="text-blue" (click)="setItemType(33)" i18n="@@i18n.recurrence.quarterly">quarterly</button>
+                                        <button ngbDropdownItem class="text-cyan" (click)="setItemType(34)" i18n="@@i18n.common.yearly">yearly</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-2 hstack gap-2">
+                                <span i18n="@@i18n.common.price" class="text-truncate col-12 col-md-6 col-xl-3">price</span>
+                                <div class="input-group">
+                                    <input type="text" class="form-control text-end" [(ngModel)]="_item.price" [autosave]="_item" />
+                                    <span class="input-group-text text-muted">{{ global.currencySymbol() }}</span>
+                                </div>
+                                @if (_item.type === 0) {
+                                    <span class="mx-2">x</span>
+                                    <div class="input-group">
+                                        <span class="input-group-text text-muted" i18n="@@i18n.common.quantity">quantity</span>
+                                        <input type="text" class="form-control" placeholder="unit name" [(ngModel)]="_item.unit_name" [autosave]="_item" i18n-placeholder="@@i18n.common.unitName" />
+                                    </div>
+                                }
+                                @if (_item.type !== 0) {
+                                    <span class="{{ _item.getRepeatColor() }}">{{ _item.getRepeatString() }}</span>
+                                }
+                            </div>
+
+                            <div class="mb-2 hstack gap-2">
+                                <span class="text-truncate col-12 col-md-6 col-xl-3">
+                                    <span i18n="@@i18n.common.vat">VAT</span>
+                                </span>
+                                <div class="input-group">
+                                    <input type="text" class="form-control text-end" [(ngModel)]="_item.vat_rate" [autosave]="_item" style="width: 75px" />
+                                    <span class="input-group-text text-muted">%</span>
+                                </div>
+                                <select class="form-select form-control" aria-label="Default select example" [autosave]="_item" [(ngModel)]="_item.vat_calculation">
+                                    <option [value]="0" i18n="@@i18n.common.net">net</option>
+                                    <option [value]="1" i18n="@@i18n.common.gross">gross</option>
+                                </select>
+                            </div>
+                        </div>
+                    } @else if (_product.time_based !== 0) {
+                        <div class="mb-2 hstack gap-2">
+                            <span class="text-truncate col-12 col-md-6 col-xl-3" i18n="@@i18n.product.basePrice">base price</span>
+                            <div class="input-group">
+                                <input type="text" class="form-control text-end" [value]="basePrice() | money" disabled />
+                                <span class="input-group-text text-muted">{{ global.currencySymbol() }}</span>
+                            </div>
+                            <span class="mx-2">→</span>
+                            <div class="input-group">
+                                <input type="text" class="form-control text-end" [value]="computedPrice() | money" disabled />
+                                <span class="input-group-text text-muted">{{ global.currencySymbol() }}</span>
+                            </div>
+                        </div>
+                        <div class="mb-2 hstack gap-2">
+                            <span class="text-truncate col-12 col-md-6 col-xl-3" i18n="@@i18n.product.priceMultiplier">price multiplier</span>
+                            <div class="input-group">
+                                <input type="text" class="form-control text-end" [autosave]="_product" [(ngModel)]="_product.price_multiplier" />
+                                <span class="input-group-text text-muted">x</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <ul-compact>
+                    <li class="list-group-item hstack gap-2" [compact]="true">
+                        <span class="col-12 col-md-6 col-xl-3 text-truncate" i18n="@@i18n.product.minItems">minimum item amount</span>
+                        <input type="text" class="form-control" [autosave]="_product" [(ngModel)]="_product.minimum_amount" />
+                    </li>
+                    <li class="list-group-item hstack gap-2" [compact]="true">
+                        <span class="col-12 col-md-6 col-xl-3 text-truncate" i18n="@@i18n.product.packageMultiplier">package multiplier</span>
+                        <input type="text" class="form-control" [autosave]="_product" [(ngModel)]="_product.package_amount" />
+                    </li>
+                    <li class="list-group-item hstack gap-2" [compact]="true">
+                        <span class="col-12 col-md-6 col-xl-3 text-truncate" i18n="@@i18n.common.weightG">weight (g)</span>
+                        <input type="text" class="form-control" [autosave]="_product" [(ngModel)]="_product.weight" />
+                    </li>
+                </ul-compact>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header" i18n="@@i18n.common.additionalQuoteClauses">additional quote clauses</div>
+                <rte [object]="_product" key="quote"></rte>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-4">
+            <div class="card sticky-side">
+                <div class="card-header capitalize-first d-flex justify-content-between align-items-center">
+                    <span i18n="@@i18n.common.customers">customers</span>
+                    <div class="chart-title" [ngbTooltip]="_totalCustomers + ' customers total'"><value-unit [value]="_totalRevenue ? (_totalRevenue | mshort) : (_totalRevenue | loading)" /></div>
+                </div>
+                <ul class="list-group">
+                    @for (c of _customers; track c.id) {
+                        <li class="list-group-item d-flex justify-content-between align-items-center" [nx]="c" [tables]="_customers">
+                            <div class="d-flex align-items-center overflow-hidden">
+                                <avatar [object]="c" class="me-2 flex-shrink-0"></avatar>
+                                <div class="text-truncate">{{ c.getName() }}</div>
+                            </div>
+                            <small class="text-muted ms-2 flex-shrink-0">{{ c.revenue | mshort }}</small>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+}

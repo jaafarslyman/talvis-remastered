@@ -1,0 +1,115 @@
+@let _projectUrl = projectUrl();
+@let _checking = checking();
+@let _error = error();
+@let _selectedCompany = selectedCompany();
+@let _creating = creating();
+@let _candidates = candidates();
+@let _isCustomCron = isCustomCron();
+<div class="modal-header">
+    <span class="modal-title" i18n="@@i18n.invoices.addAuditPipeline">add audit pipeline</span>
+    <button class="btn-close" i18n-aria-label="@@i18n.common.close" aria-label="Close" (click)="activeModal.dismiss()"></button>
+</div>
+
+<div class="modal-body">
+    <div class="mb-3">
+        <label for="projectUrl" class="form-label text-muted small" i18n="@@i18n.invoices.gitlabProjectUrl">GitLab project URL</label>
+        <div class="input-group">
+            <input id="projectUrl" class="form-control" [ngModel]="_projectUrl" (ngModelChange)="projectUrl.set($event)" i18n-placeholder="@@i18n.invoices.gitlabProjectUrlPlaceholder" placeholder="https://gitlab.example.com/namespace/project" (keyup.enter)="check()" />
+            <button class="btn btn-plain text-primary" (click)="check()" [disabled]="!_projectUrl || _checking">
+                @if (_checking) {
+                    <spinner [size]="20" [inline]="true"></spinner>
+                } @else {
+                    <ng-container i18n="@@i18n.common.check">check</ng-container>
+                }
+            </button>
+        </div>
+        @if (_error) {
+            <div class="text-danger small mt-1">{{ _error }}</div>
+        }
+    </div>
+
+    <div class="mb-3">
+        <div class="form-label text-muted small"><ng-container i18n="@@i18n.common.company">company</ng-container> <span class="text-muted" i18n="@@i18n.common.optional">(optional)</span></div>
+        @if (_selectedCompany) {
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-white">{{ _selectedCompany.getName() }}</span>
+                <button class="btn btn-sm btn-plain text-primary p-0" (click)="selectedCompany.set(undefined)">
+                    <i>close</i>
+                </button>
+            </div>
+        } @else {
+            <search-input only="Company" (itemSelected)="selectCompany($event)"></search-input>
+        }
+    </div>
+
+    @if (_candidates; as candidates) {
+        <div class="d-flex align-items-center gap-2 mb-4 p-2 border rounded">
+            <n>git</n>
+            <div>
+                <div class="fw-semibold text-white">{{ candidates.project.name }}</div>
+                <small class="text-muted">{{ candidates.project.path_with_namespace }}</small>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="auditEnvironment" class="form-label text-muted small">environment</label>
+            @if (candidates.environments.length) {
+                <select id="auditEnvironment" class="form-select" [ngModel]="candidates.environment" (ngModelChange)="check($event)" [disabled]="_checking">
+                    @for (env of candidates.environments; track env) {
+                        <option [value]="env">{{ env }}</option>
+                    }
+                </select>
+            } @else {
+                <div class="text-warning small">No environments found – the deploy job needs an <code>environment:</code> so its deployments can be audited.</div>
+            }
+        </div>
+
+        @if (!candidates.deployment) {
+            <div class="text-warning small mb-3">No successful deployment to {{ candidates.environment }} found.</div>
+        } @else if (candidates.deployment; as deployment) {
+            <div class="mb-3">
+                <div class="form-label text-muted small">audit jobs of pipeline #{{ deployment.deployable.pipeline.id }} <span class="text-muted">({{ deployment.ref }} · {{ deployment.sha.slice(0, 8) }})</span></div>
+                @if (candidates.jobs.length) {
+                    <ul class="list-group">
+                        @for (job of candidates.jobs; track job.id) {
+                            <li class="list-group-item">
+                                <label class="d-flex align-items-center gap-2 mb-0 cursor-pointer">
+                                    <input type="checkbox" class="form-check-input" [ngModel]="selectedJobs()[job.name]" (ngModelChange)="setJob(job.name, $event)" />
+                                    <span class="flex-fill">{{ job.name }}</span>
+                                    <small class="text-muted">{{ job.status }}</small>
+                                </label>
+                            </li>
+                        }
+                    </ul>
+                } @else {
+                    <div class="text-warning small">No audit jobs found in this pipeline.</div>
+                }
+            </div>
+        }
+
+        <div class="mb-2">
+            <div class="form-label text-muted small" i18n="@@i18n.invoices.scheduleInterval">schedule interval</div>
+            <div class="d-flex gap-2 flex-wrap mb-2">
+                @for (preset of cronPresets; track preset.cron) {
+                    <button class="btn btn-sm" [class.btn-primary]="!isCustomCron() && selectedCron() === preset.cron" [class.btn-outline-primary]="isCustomCron() || selectedCron() !== preset.cron" (click)="isCustomCron.set(false); selectedCron.set(preset.cron)">
+                        {{ preset.label }}
+                    </button>
+                }
+                <button class="btn btn-sm" [class.btn-primary]="_isCustomCron" [class.btn-outline-primary]="!_isCustomCron" (click)="isCustomCron.set(true)" i18n="@@i18n.common.custom">custom</button>
+            </div>
+            @if (isCustomCron()) {
+                <input class="form-control" [ngModel]="customCron()" (ngModelChange)="customCron.set($event)" i18n-placeholder="@@i18n.invoices.cronPlaceholder" placeholder="e.g. 0 3 * * 1" />
+            }
+        </div>
+    }
+</div>
+
+<div class="modal-footer">
+    <button class="btn" (click)="activeModal.dismiss()" i18n="@@i18n.common.cancel">cancel</button>
+    <button class="btn btn-primary" (click)="create()" [disabled]="!canCreate() || _creating">
+        @if (_creating) {
+            <spinner [size]="20" [inline]="true" class="me-1"></spinner>
+        }
+        <ng-container>add audit</ng-container>
+    </button>
+</div>

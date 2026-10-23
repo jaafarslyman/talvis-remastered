@@ -1,0 +1,21 @@
+import { DatePipe, DecimalPipe, NgStyle, PercentPipe } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { Nx } from '@app/nx/nx.directive';
+import { NComponent } from '@shards/n/n.component';
+import { AvatarComponent } from '@shards/avatar/avatar.component';
+import { ProjectComponent } from '@shards/project/project.component';
+import { EchartsComponent } from '@charts/echarts-wrapper/echarts-wrapper.component';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ProgressBarComponent } from '@shards/progress-bar/progress-bar.component';
+import { MoneyPipe } from '@pipes/money.pipe';
+import { MoneyShortPipe } from '@pipes/mshort.pipe';
+import { WidgetOptionsComponent } from './widget-options/widget-options.component';
+import { EchartsCardComponent } from '@charts/echarts-card/echarts-card.component';
+import { EchartsRangeCardComponent } from '@charts/echarts-card/echarts-range-card.component';
+import { LoadingPipe } from '@pipes/loading.pipe';
+import { EmptyStateComponent } from '@shards/empty-state/empty-state.component';
+import { NgxEchartsDirective } from 'ngx-echarts';
+import { CompactItemDirective } from '@shards/ul-compact/CompactItemDirective';
+import { UlCompactComponent } from '@shards/ul-compact/ul-compact.component';
+
+export const WIDGET_SHARED = [Nx, NComponent, AvatarComponent, ProjectComponent, MoneyShortPipe, ProgressBarComponent, DatePipe, DecimalPipe, NgStyle, PercentPipe, WidgetOptionsComponent, MoneyPipe, NgbTooltipModule, EchartsComponent, EchartsCardComponent, EchartsRangeCardComponent, UlCompactComponent, CompactItemDirective, RouterModule, LoadingPipe, EmptyStateComponent, NgxEchartsDirective];

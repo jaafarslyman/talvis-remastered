@@ -1,0 +1,130 @@
+@let _statistics = statistics();
+@let _topProducts = _statistics?.top_products;
+@let _fastestSellers = _statistics?.fastest_sellers;
+@let _mostRepurchased = _statistics?.most_repurchased;
+@let _rootGroups = rootGroups();
+@let _chartOption = chartOption();
+@let _selectedGroupsText = selectedGroupsText();
+@let _hasChartData = hasChartData();
+@let _statsLoading = statsLoading();
+
+<toolbar>
+    <div class="hstack gap-3">
+        <div class="input-group">
+            <span class="input-group-text" i18n="@@i18n.common.period">period</span>
+            <input type="text" class="form-control" ngxDaterangepickerMd [ngModel]="period()" (ngModelChange)="period.set($event)" [alwaysShowCalendars]="true" [showCustomRangeLabel]="true" [ranges]="ranges" [showClearButton]="false" [locale]="{ applyLabel: 'ok', format: 'DD.MM.YYYY' }" placeholder="select date range" i18n-placeholder="@@i18n.common.selectDateRange" />
+        </div>
+
+        @if (_rootGroups.length > 0) {
+            <div class="dropdown" ngbDropdown>
+                <button class="btn btn-sm btn-plain text-primary" ngbDropdownToggle><span i18n="@@i18n.common.productGroups">product groups</span>: {{ _selectedGroupsText }}</button>
+                <div class="dropdown-menu" ngbDropdownMenu>
+                    <div class="dropdown-item-text">
+                        <div class="vstack gap-2">
+                            @for (group of _rootGroups; track group.id) {
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" [id]="'group-' + group.id" [checked]="isRootGroupSelected(group)" (change)="toggleRootGroup(group)" />
+                                    <label class="form-check-label d-flex align-items-center gap-2" [for]="'group-' + group.id">
+                                        <span class="badge rounded-pill" [style.background-color]="group.color" [style.color]="group.color ? 'white' : ''">&nbsp;</span>
+                                        <span [class.text-muted]="!group.is_active">{{ group.name }}</span>
+                                        @if (!group.is_active) {
+                                            <small class="text-muted">
+                                                <span class="notranslate">(</span>
+                                                <span i18n="@@i18n.common.inactive">inactive</span>
+                                                <span class="notranslate">)</span>
+                                            </small>
+                                        }
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</toolbar>
+
+<div class="row">
+    <div class="col-12 col-md-3">
+        <div class="vstack gap-3">
+            <div class="card">
+                <div class="card-header" i18n="@@i18n.products.topProductsSold">top products by revenue</div>
+                @if (_topProducts?.length) {
+                    <ul class="list-group list-group-flush">
+                        @for (product of _topProducts; track product.id; let i = $index) {
+                            <li class="list-group-item d-flex align-items-center gap-2" [nx]="product" [tables]="_topProducts">
+                                <span class="badge rounded-pill flex-shrink-0" [class]="i === 0 ? 'bg-warning text-dark' : i === 1 ? 'text-white' : i === 2 ? 'text-white' : 'bg-dark text-white'" [style.background-color]="i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : ''" ngbTooltip="Revenue rank based on total sales value" i18n-ngbTooltip="@@i18n.products.revenueRankTooltip">#{{ i + 1 }}</span>
+                                <span class="text-truncate">{{ product.name }}</span>
+                                <span class="ms-auto small text-muted" ngbTooltip="Total revenue generated from this product" i18n-ngbTooltip="@@i18n.products.totalRevenueTooltip">{{ product.var.total_revenue | money }}</span>
+                            </li>
+                        }
+                    </ul>
+                } @else if (_statsLoading) {
+                    <spinner class="py-3"></spinner>
+                } @else {
+                    <div class="card-body">
+                        <p class="text-muted text-center" i18n="@@i18n.products.noSalesData">no sales data available</p>
+                    </div>
+                }
+            </div>
+
+            <div class="card">
+                <div class="card-header" i18n="@@i18n.products.fastestSellers">fastest selling products</div>
+                @if (_fastestSellers?.length) {
+                    <ul class="list-group list-group-flush">
+                        @for (product of _fastestSellers; track product.id; let i = $index) {
+                            <li class="list-group-item d-flex align-items-center gap-2" [nx]="product" [tables]="_fastestSellers">
+                                <span class="badge rounded-pill flex-shrink-0" [class]="i === 0 ? 'bg-warning text-dark' : i === 1 ? 'text-white' : i === 2 ? 'text-white' : 'bg-dark text-white'" [style.background-color]="i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : ''" ngbTooltip="Speed rank based on average days from item creation to invoice" i18n-ngbTooltip="@@i18n.products.speedRankTooltip">#{{ i + 1 }}</span>
+                                <span class="text-truncate">{{ product.name }}</span>
+                                <span class="ms-auto small text-muted" ngbTooltip="Average days between adding to invoice and invoice creation" i18n-ngbTooltip="@@i18n.products.salesSpeedTooltip">{{ product.var.average_sales_speed | number: '1.1-1' }}d</span>
+                            </li>
+                        }
+                    </ul>
+                } @else if (_statsLoading) {
+                    <spinner class="py-3"></spinner>
+                } @else {
+                    <div class="card-body">
+                        <p class="text-muted text-center" i18n="@@i18n.products.noSpeedData">no speed data available</p>
+                    </div>
+                }
+            </div>
+
+            <div class="card">
+                <div class="card-header" i18n="@@i18n.products.mostRepurchased">most repurchased products</div>
+                @if (_mostRepurchased?.length) {
+                    <ul class="list-group list-group-flush">
+                        @for (product of _mostRepurchased; track product.id; let i = $index) {
+                            <li class="list-group-item d-flex align-items-center gap-2" [nx]="product" [tables]="_mostRepurchased">
+                                <span class="badge rounded-pill flex-shrink-0" [class]="i === 0 ? 'bg-warning text-dark' : i === 1 ? 'text-white' : i === 2 ? 'text-white' : 'bg-dark text-white'" [style.background-color]="i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : ''" ngbTooltip="Repurchase rank based on average purchases per customer" i18n-ngbTooltip="@@i18n.products.repurchaseRankTooltip">#{{ i + 1 }}</span>
+                                <span class="text-truncate">{{ product.name }}</span>
+                                <span class="ms-auto small text-muted" ngbTooltip="Average purchases per customer" i18n-ngbTooltip="@@i18n.products.repurchaseFrequencyTooltip">{{ product.var.average_repurchase_frequency }}×</span>
+                            </li>
+                        }
+                    </ul>
+                } @else if (_statsLoading) {
+                    <spinner class="py-3"></spinner>
+                } @else {
+                    <div class="card-body">
+                        <p class="text-muted text-center" i18n="@@i18n.products.noRepurchaseData">no repurchase data available</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-9">
+        <div class="card">
+            <div class="card-header" i18n="@@i18n.products.timelineChart">revenue timeline by product group</div>
+            <div class="card-body">
+                @if (_statistics?.timeline && _hasChartData) {
+                    <div echarts [options]="_chartOption" class="chart-container" style="height: 400px"></div>
+                } @else if (_statsLoading) {
+                    <spinner class="py-4"></spinner>
+                } @else {
+                    <p class="text-muted text-center" i18n="@@i18n.products.noTimelineData">no timeline data available</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>

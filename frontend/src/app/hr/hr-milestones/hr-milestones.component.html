@@ -1,0 +1,35 @@
+@let _loading = loading();
+@let _error = error();
+@let _workloadData = workloadData();
+
+<toolbar>
+    <div class="btn-group">
+        <button type="button" class="btn btn-plain text-primary" (click)="onRangeShift(-1)"><i>chevron_left</i></button>
+        <button type="button" class="btn btn-plain text-primary" (click)="onRangeToday()" i18n="@@i18n.common.today">today</button>
+        <button type="button" class="btn btn-plain text-primary" (click)="onRangeShift(1)"><i>chevron_right</i></button>
+    </div>
+</toolbar>
+
+@if (_loading) {
+    <div class="d-flex align-items-center justify-content-center py-5">
+        <spinner></spinner>
+    </div>
+}
+
+@if (!_loading && _error) {
+    <div class="alert alert-danger m-3">{{ _error }}</div>
+}
+
+@if (!_loading && !_error && _workloadData) {
+    <div class="card">
+        <div class="card-body">
+            <capacity-calendar
+                [workloadData]="_workloadData"
+                [milestones]="scheduledMilestones()"
+                (editMilestone)="onEditMilestone($event)"
+                (milestoneRescheduled)="onMilestoneRescheduled($event)"
+                (addMilestoneForDay)="onAddMilestoneForDay($event)"
+            ></capacity-calendar>
+        </div>
+    </div>
+}

@@ -1,0 +1,19 @@
+@use './scss/bootstrap-setup';
+@use './scss/layout';
+
+@use './scss/splash-screen';
+@use './scss/fonts';
+
+@use './scss/datepicker';
+@use './scss/talvis';
+@use './scss/quill';
+@use 'material-icons/iconfont/material-icons';
+
+@import 'leaflet/dist/leaflet.css';
+@import 'quill/dist/quill.snow.css';
+
+i {
+    @extend .material-icons-outlined;
+    font-size: 1rem;
+    vertical-align: text-bottom;
+}

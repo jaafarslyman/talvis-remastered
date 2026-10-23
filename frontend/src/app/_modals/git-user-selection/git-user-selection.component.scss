@@ -1,0 +1,5 @@
+.user-card {
+  &.selected {
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+  }
+}

@@ -1,0 +1,43 @@
+@if (!number()) {
+    <div class="row">
+        <div class="col-12 col-md-3">
+            <div class="card">
+                <div class="card-header" i18n="@@i18n.common.contact">contact</div>
+                <div class="card-body">
+                    <form>
+                        <search-input only="Company,CompanyContact" (itemSelected)="onSearchResultSelect($event)"></search-input>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <span>
+                        <span i18n="@@i18n.customers.whatIsKnownSequitur">what is known sequitur</span>
+                        <span class="notranslate">?</span>
+                    </span>
+                </div>
+                <div class="card-body">
+                    <p i18n="@@i18n.knownseq.description">Known Sequitur is your comprehensive call management interface for handling customer interactions while on the phone. It provides everything you need during a call: add new projects and leads, update existing project information, capture additional contact details and employees, view important customer statistics, and identify missing information (like birthdays or lead sources) so you can ask the caller directly.</p>
+                    <div class="fw-bold mb-2" i18n="@@i18n.knownseq.getting_started">getting started</div>
+                    <ul>
+                        <li i18n="@@i18n.knownseq.search_contact">use the search field on the left to find and open an existing contact</li>
+                        <li i18n="@@i18n.knownseq.start_tracking">once selected, you'll be taken to the customer's tracking dashboard</li>
+                    </ul>
+                    <div class="fw-bold mb-2" i18n="@@i18n.knownseq.phone_integration">phone client integration</div>
+                    <p>
+                        <span i18n="@@i18n.customers.connectYourPhoneClientTo">connect your phone client to automatically open known sequitur when receiving calls</span>
+                        <span class="notranslate">:</span>
+                    </p>
+                    <div class="bg-black p-3 rounded">
+                        <code>{{ getKnownSeqUrl() }}{{ '{' }}phoneNumber{{ '}' }}</code>
+                    </div>
+                    <small class="text-muted" i18n="@@i18n.knownseq.phone_integration_note">Replace {{ '{' }}phoneNumber{{ '}' }} with the actual caller's phone number. This will automatically look up the customer, prospect, or open a scratch page for an unknown caller.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+} @else {
+    <spinner></spinner>
+}

@@ -1,0 +1,85 @@
+@if (instancesLoaded() && !instances().length) {
+    <div class="card mx-auto" style="max-width: 36rem">
+        <empty-state [card]="false" class="workflows" i18n-title="@@i18n.tasks.noIssueTrackerLinked" title="no issue tracker linked">
+            <p class="text-muted" i18n="@@i18n.tasks.noIssueTrackerHint">This page lists the open issues of a linked GitLab or Mantis project. Link one in the plugins card on the dashboard. Internal to-dos can be added to milestones.</p>
+            <div class="hstack gap-3 justify-content-center">
+                <a class="text-primary text-decoration-none hstack gap-1" routerLink="..">
+                    <i>extension</i>
+                    <span i18n="@@i18n.tasks.linkIssueTracker">link issue tracker</span>
+                </a>
+                <a class="text-primary text-decoration-none hstack gap-1" routerLink="../milestones">
+                    <i>flag</i>
+                    <span i18n="@@i18n.common.milestones">milestones</span>
+                </a>
+            </div>
+        </empty-state>
+    </div>
+} @else if (instances().length) {
+    <div class="row">
+        <div class="col-md-3">
+            @if (newTask) {
+                <div class="card mb-3">
+                    <div class="card-header d-flex align-items-center">
+                        <div class="flex-fill" i18n="@@i18n.task.newTask">new task</div>
+                    </div>
+                    <div class="card-body">
+                        <select class="form-select mb-2" id="issueSource" [(ngModel)]="newTask.httpService">
+                            @for (h of instances(); track $index) {
+                                <option [ngValue]="h">{{ h.getName() }}</option>
+                            }
+                        </select>
+                        <textarea class="form-control mb-3" [(ngModel)]="newTask.name"></textarea>
+                        <button class="btn btn-primary w-100" (click)="onCreate($event)" hotkey="CTRL+ENTER" i18n="@@i18n.info.createCtrlEnter">create [ctrl+enter]</button>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="col-md-9">
+            @if (tasks().length > 0) {
+                <div class="card mb-3">
+                    <div class="card-header d-flex align-items-center">
+                        <div i18n="@@i18n.common.tasks">tasks</div>
+                    </div>
+                    <ul-compact>
+                        @for (_ of tasks(); track $index) {
+                            <ng-content *ngTemplateOutlet="task; context: { $implicit: _ }"></ng-content>
+                        }
+                    </ul-compact>
+                </div>
+            } @else if (!tasksLoading()) {
+                <div class="card">
+                    <empty-state [card]="false" class="done" i18n-title="@@i18n.tasks.noOpenTasks" title="no open tasks"></empty-state>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<ng-template let-item #task>
+    <li class="d-flex py-1 list-group-item" [compact]="item.var.compact" [nx]="item" (actionsResolved)="actionsResolved()" #li>
+        <div class="me-3">
+            <a href="{{ item.href }}" target="_blank">
+                <n [class.text-orange]="item.state === 0" [class.text-success]="item.state === 1">{{ item.httpService.icon() ?? 'git' }}</n>
+            </a>
+        </div>
+        <div class="small me-2 text-muted">
+            <div class="badge">{{ item.httpService.getName() }}</div>
+        </div>
+        <div class="flex-fill text-truncate">
+            {{ item.name }}
+        </div>
+        <div class="me-2">
+            @for (label of item.labels; track label) {
+                <span class="badge me-1" [style.backgroundColor]="getLabelFor(label, item)?.color">{{ label }}</span>
+            }
+        </div>
+        <div class="text-complement me-2" [ngbTooltip]="item.var.user?.name">
+            <img src="{{ item.var.user?.avatar() }}" alt="avatar icon" [style.backgroundColor]="colorFor(item)" style="border: 1px #999 solid" [ngbTooltip]="item.user_name" (error)="hideIcon($event)" class="avatar avatar-xs" />
+        </div>
+        @for (u of coAssigneeUsers(item); track u.id) {
+            <div class="text-complement me-2" [ngbTooltip]="u.getName()">
+                <img src="{{ u.avatar() }}" alt="avatar icon" style="border: 1px #999 solid" (error)="hideIcon($event)" class="avatar avatar-xs" />
+            </div>
+        }
+    </li>
+</ng-template>
